@@ -1,0 +1,10 @@
+[submodule "external_packages/myagv_ros2"]
+	path = external_packages/myagv_ros2
+	url = https://github.com/elephantrobotics/myagv_ros2.git
+	branch = galactic-JN
+	shallow = true
+[submodule "external_packages/mycobot_ros2"]
+	path = external_packages/mycobot_ros2
+	url = https://github.com/elephantrobotics/mycobot_ros2.git
+	branch = humble
+	shallow = true
