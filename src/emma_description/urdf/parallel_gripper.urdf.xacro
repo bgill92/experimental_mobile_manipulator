@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  myCobot parallel gripper (light), adapted from elephantrobotics/mycobot_ros
+  (noetic, c0d6fbe): mycobot_description/urdf/parallel_gripper/mycobot_parallel_gripper.urdf
+  and the flange mount in mycobot_280_jn/mycobot_280_jn_parallel_gripper.urdf.
+  Meshes are copied into meshes/parallel_gripper/ (BSD 3-Clause, see LICENSE there).
+
+  Changes from upstream:
+  - gripper_base is the mesh frame (fingers along +z, left finger on +x). Upstream
+    rotated every visual by -90 deg about x and the mount by +90 deg about x, which
+    cancel; upstream collisions skipped the per-link rotation and sat 90 deg off.
+  - The mimic joint is named gripper_base_to_gripper_right; upstream called the
+    right-finger joint gripper_base_to_gripper_left.
+
+  gripper_controller is the left finger's travel in metres: 0 is open (15 mm between
+  the fingertips), -0.007 is closed. The right finger mirrors it. The 7 mm travel is
+  upstream's value and has not been checked against the real gripper.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="parallel_gripper">
+
+  <xacro:macro name="gripper_link" params="name">
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <mesh filename="package://emma_description/meshes/parallel_gripper/${name}.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://emma_description/meshes/parallel_gripper/${name}.dae"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:gripper_link name="gripper_base"/>
+  <xacro:gripper_link name="gripper_left"/>
+  <xacro:gripper_link name="gripper_right"/>
+
+  <joint name="joint6_flange_to_gripper_base" type="fixed">
+    <parent link="joint6_flange"/>
+    <child link="gripper_base"/>
+    <origin xyz="0 0 0.034" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="gripper_controller" type="prismatic">
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="-0.007" upper="0.0" velocity="0"/>
+    <parent link="gripper_base"/>
+    <child link="gripper_left"/>
+  </joint>
+
+  <joint name="gripper_base_to_gripper_right" type="prismatic">
+    <axis xyz="1 0 0"/>
+    <limit effort="1000.0" lower="0.0" upper="0.007" velocity="0"/>
+    <parent link="gripper_base"/>
+    <child link="gripper_right"/>
+    <mimic joint="gripper_controller" multiplier="-1.0" offset="0"/>
+  </joint>
+
+</robot>

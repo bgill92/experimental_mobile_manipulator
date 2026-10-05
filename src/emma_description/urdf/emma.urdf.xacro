@@ -16,11 +16,17 @@
   <xacro:arg name="model" default="both"/>
   <xacro:property name="model" value="$(arg model)"/>
 
+  <!-- End effector on the arm flange: parallel or none. Ignored without the arm. -->
+  <xacro:arg name="gripper" default="parallel"/>
+
   <xacro:if value="${model in ['base', 'both']}">
     <xacro:include filename="$(find myagv_description)/urdf/myAGV.urdf"/>
   </xacro:if>
   <xacro:if value="${model in ['arm', 'both']}">
     <xacro:include filename="$(find emma_description)/urdf/mycobot_280_m5.urdf.xacro"/>
+    <xacro:if value="${'$(arg gripper)' == 'parallel'}">
+      <xacro:include filename="$(find emma_description)/urdf/parallel_gripper.urdf.xacro"/>
+    </xacro:if>
   </xacro:if>
 
   <xacro:if value="${model == 'both'}">

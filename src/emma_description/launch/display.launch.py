@@ -11,12 +11,14 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     gui = LaunchConfiguration('gui')
     model = LaunchConfiguration('model')
+    gripper = LaunchConfiguration('gripper')
     share = FindPackageShare('emma_description')
 
     robot_description = ParameterValue(
         Command([
             'xacro ', PathJoinSubstitution([share, 'urdf', 'emma.urdf.xacro']),
             ' model:=', model,
+            ' gripper:=', gripper,
         ]),
         value_type=str,
     )
@@ -27,10 +29,13 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'gui', default_value='true',
-            description='Start joint_state_publisher_gui to move the arm joints'),
+            description='Start joint_state_publisher_gui to move the arm and gripper joints'),
         DeclareLaunchArgument(
             'model', default_value='both', choices=['base', 'arm', 'both'],
             description='Which part of the robot to show'),
+        DeclareLaunchArgument(
+            'gripper', default_value='parallel', choices=['parallel', 'none'],
+            description='End effector on the arm flange'),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
