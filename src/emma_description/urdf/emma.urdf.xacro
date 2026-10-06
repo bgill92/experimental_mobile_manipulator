@@ -35,6 +35,31 @@
       <parent link="base_footprint"/>
       <child link="base_inertia"/>
     </joint>
+
+    <!-- Mecanum wheels, added here because upstream has none. Geometry is estimated from the
+         myagv_base mesh, which also draws the wheels, so these links carry no visual. The
+         mesh sits about 4 mm toward -y, hence the asymmetric y. Mass is an estimate; the
+         tensor is a solid cylinder. MuJoCo's rollers come from postprocess_mjcf.py. -->
+    <xacro:property name="wheel_radius" value="0.04"/>
+    <xacro:macro name="mecanum_wheel" params="name x y">
+      <link name="${name}_wheel">
+        <inertial>
+          <mass value="0.1"/>
+          <inertia ixx="4.8e-5" ixy="0" ixz="0" iyy="8e-5" iyz="0" izz="4.8e-5"/>
+        </inertial>
+      </link>
+      <joint name="${name}_wheel_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="${name}_wheel"/>
+        <origin xyz="${x} ${y} ${wheel_radius}" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+        <limit effort="1000" velocity="30"/>
+      </joint>
+    </xacro:macro>
+    <xacro:mecanum_wheel name="front_left" x="0.1124" y="0.0945"/>
+    <xacro:mecanum_wheel name="front_right" x="0.1124" y="-0.1031"/>
+    <xacro:mecanum_wheel name="rear_left" x="-0.1014" y="0.0945"/>
+    <xacro:mecanum_wheel name="rear_right" x="-0.1014" y="-0.1031"/>
   </xacro:if>
   <xacro:if value="${model in ['arm', 'both']}">
     <xacro:include filename="$(find emma_description)/urdf/mycobot_280_m5.urdf.xacro"/>
@@ -51,11 +76,12 @@
     </joint>
   </xacro:if>
 
-  <!-- ros2_control hardware: none (visualization only) or mujoco. The base is not
-       driven yet, so only the arm and gripper are exposed. -->
+  <!-- ros2_control hardware: none (visualization only) or mujoco. -->
   <xacro:arg name="ros2_control" default="none"/>
   <!-- MJCF scene loaded by the MuJoCo hardware plugin. -->
   <xacro:arg name="mujoco_model" default=""/>
+  <!-- Velocity PID gains for the wheel motors, which MuJoCo drives by force. -->
+  <xacro:arg name="pids_config_file" default=""/>
   <xacro:arg name="headless" default="false"/>
 
   <xacro:macro name="position_joint" params="name">
@@ -68,13 +94,26 @@
     </joint>
   </xacro:macro>
 
+  <xacro:macro name="velocity_joint" params="name">
+    <joint name="${name}">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
   <xacro:if value="${'$(arg ros2_control)' == 'mujoco' and model == 'both'}">
     <ros2_control name="MujocoSystem" type="system">
       <hardware>
         <plugin>mujoco_ros2_control/MujocoSystemInterface</plugin>
         <param name="mujoco_model">$(arg mujoco_model)</param>
         <param name="headless">$(arg headless)</param>
+        <param name="pids_config_file">$(arg pids_config_file)</param>
       </hardware>
+      <xacro:velocity_joint name="front_left_wheel_joint"/>
+      <xacro:velocity_joint name="front_right_wheel_joint"/>
+      <xacro:velocity_joint name="rear_left_wheel_joint"/>
+      <xacro:velocity_joint name="rear_right_wheel_joint"/>
       <xacro:position_joint name="joint2_to_joint1"/>
       <xacro:position_joint name="joint3_to_joint2"/>
       <xacro:position_joint name="joint4_to_joint3"/>
