@@ -19,6 +19,7 @@ standing on four mecanum wheels modelled with passive rollers.
 | `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults. |
 | `mujoco/mujoco_description_formatted.xml` | **Generated** robot MJCF. Do not hand-edit; regenerate. |
 | `mujoco/assets/` | **Generated** OBJ meshes and textures (~33 MB). |
+| `rviz/sim.rviz` | RViz config rooted at `odom` with an Odometry display, so the base is seen moving. |
 | `scripts/gen_mjcf.sh` | Regenerates the two generated items above from the URDF. |
 | `scripts/postprocess_mjcf.py` | Fixes the converter output and adds the mecanum rollers (see below). |
 | `scripts/check_mecanum.py` | Physics-only check that the base drives forward, strafes, and turns the commanded way. |
@@ -33,7 +34,7 @@ pixi run sim headless:=true rviz:=false    # no windows
 | Launch argument | Default | Effect |
 |---|---|---|
 | `headless` | `false` | Run MuJoCo without its viewer. |
-| `rviz` | `true` | Start RViz with `emma_description`'s config. |
+| `rviz` | `true` | Start RViz with `rviz/sim.rviz` (robot model + odometry trail). |
 | `mujoco_model` | `share/emma_simulation/mujoco/scene.xml` | MJCF scene to load. |
 
 `pixi run sim` builds the workspace first, so freshly generated MJCF files get installed.

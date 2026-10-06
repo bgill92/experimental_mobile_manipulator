@@ -3,7 +3,7 @@ project(emma_simulation)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY config launch mujoco scripts
+install(DIRECTORY config launch mujoco rviz scripts
   DESTINATION share/${PROJECT_NAME}
   USE_SOURCE_PERMISSIONS
 )

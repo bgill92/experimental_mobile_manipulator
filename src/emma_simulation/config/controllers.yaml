@@ -11,6 +11,9 @@ controller_manager:
       type: parallel_gripper_action_controller/GripperActionController
     mecanum_drive_controller:
       type: mecanum_drive_controller/MecanumDriveController
+      # The controller publishes odom -> base_footprint on ~/tf_odometry, not /tf.
+      # Controllers ignore the process's global remaps, so remap per controller.
+      node_options_args: ["-r", "~/tf_odometry:=/tf"]
 
 arm_controller:
   ros__parameters:
