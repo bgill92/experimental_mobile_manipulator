@@ -23,6 +23,8 @@ standing on four mecanum wheels modelled with passive rollers.
 | `scripts/gen_mjcf.sh` | Regenerates the two generated items above from the URDF. |
 | `scripts/postprocess_mjcf.py` | Fixes the converter output and adds the mecanum rollers (see below). |
 | `scripts/check_mecanum.py` | Physics-only check that the base drives forward, strafes, and turns the commanded way. |
+| `scripts/molmospaces_scene.py` | Downloads a MolmoSpaces room and writes a scene with emma in it (see *Living room scene*). |
+| `mujoco/molmospaces/` | **Downloaded and generated**, gitignored: rooms, their object assets, and the composed `<plan>_emma.xml` scenes. |
 
 ## Running
 
@@ -71,6 +73,44 @@ Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
   Compare it with `/mecanum_drive_controller/odometry` to see wheel-odometry drift.
 - `/clock`: sim time. Every node runs with `use_sim_time`, so pausing MuJoCo pauses the controllers.
+
+### Living room scene
+
+emma can also run in a furnished room from [MolmoSpaces](https://github.com/allenai/molmospaces)
+(AI2's iTHOR rooms converted to MJCF; data CC BY 4.0, not redistributed here):
+
+```bash
+pixi run molmospaces-scene   # first run downloads ~30 MB on disk (~550 MB transferred)
+pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
+```
+
+The default is living room `FloorPlan201`, with emma in an open strip beside the sofa facing +y.
+Other rooms take the plan name and a spawn pose in the room's world frame:
+`pixi run molmospaces-scene FloorPlan205 x y yaw`. `--freeze-kg` sets the static threshold (see below). iTHOR living rooms are `FloorPlan201`-`230`,
+bedrooms `301`-`330`, kitchens `1`-`30`, bathrooms `401`-`430`. Pick the pose by rendering or
+viewing the bare room (`<plan>_physics.xml`); a pose inside furniture leaves emma stuck on top of it.
+
+The script fetches only the room archive and the object files it references, using HTTP range
+requests into the dataset's shard tars. It then attaches emma's MJCF to the room with `MjSpec` and
+writes `<plan>_emma.xml`, with asset paths made absolute so both models' mesh directories survive.
+It also remaps emma's collision bits to fit the room's:
+
+| Geoms | Room scene | Why |
+|---|---|---|
+| Rollers | `conaffinity` 1 → 9 | The room's floor and walls have `contype` 8. |
+| Arm collision meshes | `contype` 0 → 2 | The arm hits walls, furniture and loose objects. |
+| Chassis collision meshes | `contype` 0 → 4; the floor drops bit 4 | The chassis hits furniture, but its hull reaches the ground and would drag on the floor. |
+
+To keep the room fast, loose bodies of at least `--freeze-kg` (default 4 kg) lose their free joint
+and become part of the static world. In `FloorPlan201` that is the 16 pieces of furniture: sofa,
+armchairs, tables, TV stand, chairs and floor lamp. MuJoCo skips contacts between static bodies,
+and emma can't move furniture this heavy anyway. Drawers and doors keep their own joints. The 16
+small objects (books, laptop, plant, remote...) stay loose, and MuJoCo sleep is enabled so they
+cost nothing while resting and wake when touched. `--freeze-kg inf` keeps everything loose.
+
+emma's own geoms still ignore each other, so the arm still passes through the base. Rerun the
+script after `pixi run gen-mjcf`, since the composed scene copies the robot model.
+`check_mecanum.py <plan>_emma.xml` passes in `FloorPlan201`.
 
 ### Physics only (no ROS)
 
@@ -162,5 +202,15 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
   Python dependencies (`mujoco-python`, `trimesh`, `pycollada`, `obj2mjcf`) come from `pixi.toml`.
 - **Real-time warning**: `Could not enable FIFO RT scheduling policy` at startup is harmless in
   simulation.
+- **Room scenes are slower than the bare scene**: `FloorPlan201` with emma steps at about 15× real
+  time in plain MuJoCo, against about 50× for `scene.xml`. With nothing frozen and sleep off it
+  drops to about 2×: the 32 loose bodies resting on each other make ~240 contacts a step, and the
+  room's 4 `noslip_iterations` take about 40% of the step. The room's solver options (elliptic
+  cone, `noslip_iterations` 4, `impratio` 10) replace the defaults in `scene.xml`.
+- **Frozen furniture doesn't move**: emma can't push a chair out of the way. Lower `--freeze-kg`
+  for more speed, raise it (or `inf`) for more loose objects.
+- **Room scenes use the room's floor**: the ceiling, walls and floor come from the room, and the
+  floor sits at z = 0. The composed XML holds absolute paths, so regenerate it after moving the
+  checkout.
 - **Passive-joint warning**: `Unable to find the actuator 'gripper_base_to_gripper_right'` is
   expected, because that joint is the passive mimic finger.

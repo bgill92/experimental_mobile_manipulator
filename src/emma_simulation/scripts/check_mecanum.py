@@ -33,7 +33,9 @@ def drive(model, data, twist, seconds=2.0):
     joints = [model.joint(f"{w}_wheel_joint") for w in WHEELS]
     acts = [model.actuator(f"{w}_wheel_joint").id for w in WHEELS]
     target = wheel_speeds(*twist)
-    start = data.qpos[:7].copy()
+    # Other free bodies (e.g. furniture in a room scene) may come before emma's in qpos.
+    base = model.joint("floating_base_joint").qposadr[0]
+    start = data.qpos[base:base + 7].copy()
     # The plugin updates the PIDs once per controller cycle and holds ctrl between sim steps.
     hold = round(1 / CONTROLLERS["controller_manager"]["ros__parameters"]["update_rate"] / model.opt.timestep)
     for step in range(int(seconds / model.opt.timestep)):
@@ -45,9 +47,9 @@ def drive(model, data, twist, seconds=2.0):
     # Displacement in the start heading's frame, plus yaw change.
     yaw = lambda q: np.arctan2(2 * (q[0] * q[3] + q[1] * q[2]), 1 - 2 * (q[2] ** 2 + q[3] ** 2))
     y0 = yaw(start[3:7])
-    d = data.qpos[:2] - start[:2]
+    d = data.qpos[base:base + 2] - start[:2]
     local = np.array([np.cos(y0) * d[0] + np.sin(y0) * d[1], -np.sin(y0) * d[0] + np.cos(y0) * d[1]])
-    return local[0], local[1], yaw(data.qpos[3:7]) - y0
+    return local[0], local[1], yaw(data.qpos[base + 3:base + 7]) - y0
 
 
 def main() -> None:

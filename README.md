@@ -36,9 +36,17 @@ pixi run sim        # MuJoCo viewer + RViz; add headless:=true rviz:=false to ru
 pixi run gen-mjcf   # regenerate the MuJoCo model after URDF changes
 ```
 
+To put emma in a furnished living room from [MolmoSpaces](https://github.com/allenai/molmospaces):
+
+```bash
+pixi run molmospaces-scene   # downloads the room once, writes the combined scene
+pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
+```
+
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
 
 ## License
 
 MIT, see [LICENSE](LICENSE). The Elephant Robotics packages in `external_packages/`
 and the gripper meshes in `src/emma_description/meshes/parallel_gripper/` keep their own licenses.
+MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0.
