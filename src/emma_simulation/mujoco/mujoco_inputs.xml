@@ -29,6 +29,13 @@
       <position name="joint6_to_joint5" joint="joint6_to_joint5" kp="20" dampratio="1.0" ctrlrange="-2.7052 2.7925"/>
       <position name="joint6output_to_joint6" joint="joint6output_to_joint6" kp="20" dampratio="1.0" ctrlrange="-3.14159 3.14159"/>
       <position name="gripper_controller" joint="gripper_controller" kp="100" dampratio="1.0" ctrlrange="-0.007 0"/>
+      <!-- Wheels take torque; mujoco_ros2_control closes the velocity loop with the gains in
+           config/wheel_pids.yaml. A velocity actuator fights the roller contacts. The 1 N·m
+           clamp is an estimate for the myAGV's small gear motors. -->
+      <motor name="front_left_wheel_joint" joint="front_left_wheel_joint" ctrlrange="-1 1"/>
+      <motor name="front_right_wheel_joint" joint="front_right_wheel_joint" ctrlrange="-1 1"/>
+      <motor name="rear_left_wheel_joint" joint="rear_left_wheel_joint" ctrlrange="-1 1"/>
+      <motor name="rear_right_wheel_joint" joint="rear_right_wheel_joint" ctrlrange="-1 1"/>
     </actuator>
   </raw_inputs>
 
@@ -41,6 +48,12 @@
     <modify_element type="joint" name="joint5_to_joint4" damping="0.5" armature="0.01"/>
     <modify_element type="joint" name="joint6_to_joint5" damping="0.5" armature="0.01"/>
     <modify_element type="joint" name="joint6output_to_joint6" damping="0.5" armature="0.01"/>
+    <!-- Armature stands in for the gear motor's reflected rotor inertia. Without it the bare
+         wheel is so light that the 100 Hz velocity PID oscillates. -->
+    <modify_element type="joint" name="front_left_wheel_joint" armature="0.002"/>
+    <modify_element type="joint" name="front_right_wheel_joint" armature="0.002"/>
+    <modify_element type="joint" name="rear_left_wheel_joint" armature="0.002"/>
+    <modify_element type="joint" name="rear_right_wheel_joint" armature="0.002"/>
   </processed_inputs>
 
 </mujoco_inputs>
