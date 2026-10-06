@@ -1,0 +1,46 @@
+<mujoco_inputs>
+
+  <!-- Copied verbatim into the MJCF by the converter. -->
+  <raw_inputs>
+    <!-- obj2mjcf emits geoms with class="visual"/"collision", so both classes must exist.
+         The global default keeps class-less geoms from colliding and jamming joints. -->
+    <default>
+      <geom contype="0" conaffinity="0"/>
+      <default class="visual">
+        <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+      </default>
+      <default class="collision">
+        <geom group="3" type="mesh"/>
+      </default>
+    </default>
+
+    <!-- Replaces the URDF <mimic> on the right finger, which the converter drops. -->
+    <equality>
+      <joint joint1="gripper_base_to_gripper_right" joint2="gripper_controller" polycoef="0 -1 0 0 0"
+             solimp="0.95 0.99 0.001" solref="0.005 1"/>
+    </equality>
+
+    <!-- Actuator names must equal joint names: mujoco_ros2_control matches them by name. -->
+    <actuator>
+      <position name="joint2_to_joint1" joint="joint2_to_joint1" kp="50" dampratio="1.0" ctrlrange="-2.9321 2.9321"/>
+      <position name="joint3_to_joint2" joint="joint3_to_joint2" kp="50" dampratio="1.0" ctrlrange="-2.4434 2.4434"/>
+      <position name="joint4_to_joint3" joint="joint4_to_joint3" kp="50" dampratio="1.0" ctrlrange="-2.6179 2.6179"/>
+      <position name="joint5_to_joint4" joint="joint5_to_joint4" kp="20" dampratio="1.0" ctrlrange="-2.6179 2.6179"/>
+      <position name="joint6_to_joint5" joint="joint6_to_joint5" kp="20" dampratio="1.0" ctrlrange="-2.7052 2.7925"/>
+      <position name="joint6output_to_joint6" joint="joint6output_to_joint6" kp="20" dampratio="1.0" ctrlrange="-3.14159 3.14159"/>
+      <position name="gripper_controller" joint="gripper_controller" kp="100" dampratio="1.0" ctrlrange="-0.007 0"/>
+    </actuator>
+  </raw_inputs>
+
+  <processed_inputs>
+    <!-- Real joint damping sits outside the actuator force clamp, so it keeps a saturated
+         position actuator from limit cycling. -->
+    <modify_element type="joint" name="joint2_to_joint1" damping="1" armature="0.01"/>
+    <modify_element type="joint" name="joint3_to_joint2" damping="1" armature="0.01"/>
+    <modify_element type="joint" name="joint4_to_joint3" damping="1" armature="0.01"/>
+    <modify_element type="joint" name="joint5_to_joint4" damping="0.5" armature="0.01"/>
+    <modify_element type="joint" name="joint6_to_joint5" damping="0.5" armature="0.01"/>
+    <modify_element type="joint" name="joint6output_to_joint6" damping="0.5" armature="0.01"/>
+  </processed_inputs>
+
+</mujoco_inputs>

@@ -1,0 +1,26 @@
+<mujoco model="emma_scene">
+  <include file="mujoco_description_formatted.xml"/>
+
+  <statistic center="0 0 0.3" extent="1"/>
+
+  <visual>
+    <headlight diffuse="0.4 0.4 0.4" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <global azimuth="120" elevation="-20"/>
+    <!-- The default shadowclip (1 x extent) speckles the floor and the base with shadow
+         acne; 6 renders clean. -->
+    <map shadowclip="6"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.82 0.84 0.86" rgb2="0.45 0.55 0.68" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.6 0.6 0.6" rgb2="0.5 0.5 0.5"
+             markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.1"/>
+  </asset>
+
+  <worldbody>
+    <!-- trackcom keeps the shadow map centred on the robot once the base drives. -->
+    <light name="key" directional="true" mode="trackcom" pos="0 0 2" dir="-0.45 0.35 -0.82" castshadow="true"/>
+    <geom name="floor" type="plane" size="0 0 0.01" material="groundplane" contype="1" conaffinity="0"/>
+  </worldbody>
+</mujoco>
