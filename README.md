@@ -16,44 +16,27 @@ cd experimental_mobile_manipulator
 pixi run build
 ```
 
+## Packages
+
+- [`emma_description`](src/emma_description/README.md): URDF of the robot (myAGV, myCobot 280 M5
+  and parallel gripper), RViz display launch, and the changes made to the upstream models.
+- [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
+  mujoco_ros2_control, with arm and gripper controllers.
+
 ## View the robot
 
 ```bash
 pixi run bash -c "source install/setup.bash && ros2 launch emma_description display.launch.py"
 ```
 
-Launch arguments:
+## Simulate the robot
 
-- `model:=both|base|arm` shows the whole robot (default), only the myAGV, or only the arm.
-- `gripper:=parallel|none` mounts the parallel gripper on the arm flange (default `parallel`).
-- `gui:=true|false` starts the joint slider GUI for moving the arm and gripper (default `true`).
+```bash
+pixi run sim        # MuJoCo viewer + RViz; add headless:=true rviz:=false to run without windows
+pixi run gen-mjcf   # regenerate the MuJoCo model after URDF changes
+```
 
-## Parallel gripper
-
-The arm carries the Elephant Robotics
-[parallel gripper (light)](https://americas.shop.elephantrobotics.com/collections/end-effectors/products/mycobot-gripper-parallel).
-`mycobot_ros2` has no model of it, so it comes from the ROS 1 repo
-[mycobot_ros](https://github.com/elephantrobotics/mycobot_ros) (`noetic`, `c0d6fbe`):
-
-- Meshes: `mycobot_description/urdf/parallel_gripper/*.dae`, copied to
-  `src/emma_description/meshes/parallel_gripper/` with their BSD 3-Clause license.
-- Links, joints and the flange mount (34 mm along the flange axis): `mycobot_parallel_gripper.urdf`
-  and `mycobot_280_jn/mycobot_280_jn_parallel_gripper.urdf`, rewritten as
-  `src/emma_description/urdf/parallel_gripper.urdf.xacro`.
-
-Changes from upstream:
-
-- Collision geometry now matches the visuals. Upstream rotated each visual mesh by -90° about x
-  but not the collision mesh, so the collision model sat 90° off. That rotation and the +90° mount
-  rotation cancel out, so both are dropped and `gripper_base` is the mesh frame.
-- The right-finger joint is named `gripper_base_to_gripper_right` (upstream:
-  `gripper_base_to_gripper_left`).
-
-In the joint slider GUI, `gripper_controller` moves the left finger from 0 (open, 15 mm between
-the fingertips) to -0.007 m (closed, 1 mm). The right finger mirrors it through a `mimic` joint, so
-it has no slider. The 7 mm travel per finger is upstream's value and has not been measured on the
-real gripper. Note: upstream's `mycobot_280m5_with_gripper_parallel.urdf` is the *adaptive*
-gripper despite its name.
+Launch arguments, example action goals, assumptions and caveats are in each package's README.
 
 ## License
 
