@@ -3,9 +3,14 @@
   myCobot 280 M5 arm, copied from elephantrobotics/mycobot_ros2 (d42ff61):
   mycobot_description/urdf/mycobot_280_m5/mycobot_280_m5.urdf
 
-  Only change: the g_base link has no visual or collision. Upstream draws the
-  optional G-base mounting plate there, which this robot does not have; the arm
-  bolts straight onto the myAGV. Meshes still load from mycobot_description.
+  Changes from upstream:
+  - The g_base link has no visual or collision. Upstream draws the optional G-base
+    mounting plate there, which this robot does not have; the arm bolts straight
+    onto the myAGV. Meshes still load from mycobot_description.
+  - Inertials added (upstream has none; MuJoCo rejects massless moving bodies).
+    Masses are estimates summing to the ~0.85 kg spec; the inertia tensors are
+    solid boxes over each mesh's bounding box. Not measured.
+  - Revolute velocity limits set to 2.79 rad/s (160 deg/s spec) instead of 0.
 
   BSD 2-Clause License
 
@@ -41,6 +46,11 @@
   <link name="g_base"/>
 
   <link name="joint1">
+    <inertial>
+      <origin xyz="-0.0036 0 0.0365" rpy="0 0 0"/>
+      <mass value="0.25"/>
+      <inertia ixx="0.0002798" ixy="0" ixz="0" iyy="0.0003062" iyz="0" izz="0.000364"/>
+    </inertial>
     <visual>
       <geometry>
 	     <!--- 0.0 0 -0.04  1.5708 3.14159-->
@@ -58,6 +68,11 @@
   </link>
 
   <link name="joint2">
+    <inertial>
+      <origin xyz="0 -0.0063 -0.0206" rpy="0 0 0"/>
+      <mass value="0.15"/>
+      <inertia ixx="0.0001407" ixy="0" ixz="0" iyy="0.0001236" iyz="0" izz="7.47e-05"/>
+    </inertial>
     <visual>
       <geometry>
        <mesh filename="package://mycobot_description/urdf/mycobot_280_m5/joint2.dae"/>
@@ -74,6 +89,11 @@
 
 
   <link name="joint3">
+    <inertial>
+      <origin xyz="-0.054 0 0.0576" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="4.478e-05" ixy="0" ixz="0" iyy="0.0002284" iyz="0" izz="0.000222"/>
+    </inertial>
     <visual>
       <geometry>
        <mesh filename="package://mycobot_description/urdf/mycobot_280_m5/joint3.dae"/>
@@ -90,6 +110,11 @@
 
 
   <link name="joint4">
+    <inertial>
+      <origin xyz="-0.0468 0 0.0065" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="4.339e-05" ixy="0" ixz="0" iyy="0.0001838" iyz="0" izz="0.0001715"/>
+    </inertial>
     <visual>
       <geometry>
        <!--- 0.0 0 -0.04 -->
@@ -108,6 +133,11 @@
 
 
   <link name="joint5">
+    <inertial>
+      <origin xyz="0 -0.0084 -0.0073" rpy="0 0 0"/>
+      <mass value="0.08"/>
+      <inertia ixx="3.965e-05" ixy="0" ixz="0" iyy="2.845e-05" iyz="0" izz="3.106e-05"/>
+    </inertial>
     <visual>
       <geometry>
        <!--- 0.0 0 -0.04 -->
@@ -126,6 +156,11 @@
 
 
   <link name="joint6">
+    <inertial>
+      <origin xyz="0 0.0067 -0.0094" rpy="0 0 0"/>
+      <mass value="0.07"/>
+      <inertia ixx="3.777e-05" ixy="0" ixz="0" iyy="2.762e-05" iyz="0" izz="2.736e-05"/>
+    </inertial>
     <visual>
       <geometry>
        <!--- 0.0 0 -0.04 -->
@@ -144,6 +179,11 @@
 
 
   <link name="joint6_flange">
+    <inertial>
+      <origin xyz="0 0 -0.0052" rpy="0 0 0"/>
+      <mass value="0.02"/>
+      <inertia ixx="2.77e-06" ixy="0" ixz="0" iyy="2.77e-06" iyz="0" izz="4.915e-06"/>
+    </inertial>
     <visual>
       <geometry>
        <!--- 0.0 0 -0.04 -->
@@ -172,7 +212,7 @@
 
   <joint name="joint2_to_joint1" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort = "1000.0" lower = "-2.9321" upper = "2.9321" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-2.9321" upper = "2.9321" velocity = "2.79"/>
     <parent link="joint1"/>
     <child link="joint2"/>
     <origin xyz= "0 0 0.13156" rpy = "0 0 0"/>
@@ -181,7 +221,7 @@
 
   <joint name="joint3_to_joint2" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort = "1000.0" lower = "-2.4434" upper = "2.4434" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-2.4434" upper = "2.4434" velocity = "2.79"/>
     <parent link="joint2"/>
     <child link="joint3"/>
     <origin xyz= "0 0  0" rpy = "0 1.5708 -1.5708"/>
@@ -190,7 +230,7 @@
 
   <joint name="joint4_to_joint3" type="revolute">
     <axis xyz=" 0 0 1"/>
-    <limit effort = "1000.0" lower = "-2.6179" upper = "2.6179" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-2.6179" upper = "2.6179" velocity = "2.79"/>
     <parent link="joint3"/>
     <child link="joint4"/>
     <origin xyz= "  -0.1104 0 0   " rpy = "0 0 0"/>
@@ -200,7 +240,7 @@
 
   <joint name="joint5_to_joint4" type="revolute">
     <axis xyz=" 0 0 1"/>
-    <limit effort = "1000.0" lower = "-2.6179" upper = "2.6179" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-2.6179" upper = "2.6179" velocity = "2.79"/>
     <parent link="joint4"/>
     <child link="joint5"/>
     <origin xyz= "-0.096 0 0.06462" rpy = "0 0 -1.5708"/>
@@ -208,7 +248,7 @@
 
   <joint name="joint6_to_joint5" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort = "1000.0" lower = "-2.7052" upper = "2.7925" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-2.7052" upper = "2.7925" velocity = "2.79"/>
     <parent link="joint5"/>
     <child link="joint6"/>
     <origin xyz= "0 -0.07318 0" rpy = "1.5708 -1.5708 0"/>
@@ -216,7 +256,7 @@
 
   <joint name="joint6output_to_joint6" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort = "1000.0" lower = "-3.14159" upper = "3.14159" velocity = "0"/>
+    <limit effort = "1000.0" lower = "-3.14159" upper = "3.14159" velocity = "2.79"/>
     <parent link="joint6"/>
     <child link="joint6_flange"/>
     <origin xyz= "0 0.0456 0" rpy = "-1.5708 0 0"/>

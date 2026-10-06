@@ -21,6 +21,20 @@
 
   <xacro:if value="${model in ['base', 'both']}">
     <xacro:include filename="$(find myagv_description)/urdf/myAGV.urdf"/>
+    <!-- Upstream myAGV links have no inertial, and the submodule can't be edited, so
+         the mass rides on a fixed child link. 3.6 kg is an estimate; the tensor is a
+         solid box over the base mesh bounds. -->
+    <link name="base_inertia">
+      <inertial>
+        <origin xyz="0.007 -0.0042 0.0661" rpy="0 0 0"/>
+        <mass value="3.6"/>
+        <inertia ixx="0.02098" ixy="0" ixz="0" iyy="0.0347" iyz="0" izz="0.04518"/>
+      </inertial>
+    </link>
+    <joint name="base_footprint_to_base_inertia" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_inertia"/>
+    </joint>
   </xacro:if>
   <xacro:if value="${model in ['arm', 'both']}">
     <xacro:include filename="$(find emma_description)/urdf/mycobot_280_m5.urdf.xacro"/>

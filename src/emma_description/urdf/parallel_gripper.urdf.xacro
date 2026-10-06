@@ -11,6 +11,8 @@
     cancel; upstream collisions skipped the per-link rotation and sat 90 deg off.
   - The mimic joint is named gripper_base_to_gripper_right; upstream called the
     right-finger joint gripper_base_to_gripper_left.
+  - Inertials added (estimated masses, bounding-box inertia) and the velocity limit
+    set to 0.05 m/s instead of 0. Neither is measured.
 
   gripper_controller is the left finger's travel in metres: 0 is open (15 mm between
   the fingertips), -0.007 is closed. The right finger mirrors it. The 7 mm travel is
@@ -18,8 +20,9 @@
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="parallel_gripper">
 
-  <xacro:macro name="gripper_link" params="name">
+  <xacro:macro name="gripper_link" params="name *inertial">
     <link name="${name}">
+      <xacro:insert_block name="inertial"/>
       <visual>
         <geometry>
           <mesh filename="package://emma_description/meshes/parallel_gripper/${name}.dae"/>
@@ -33,9 +36,27 @@
     </link>
   </xacro:macro>
 
-  <xacro:gripper_link name="gripper_base"/>
-  <xacro:gripper_link name="gripper_left"/>
-  <xacro:gripper_link name="gripper_right"/>
+  <xacro:gripper_link name="gripper_base">
+    <inertial>
+      <origin xyz="0 -0.0095 -0.0035" rpy="0 0 0"/>
+      <mass value="0.05"/>
+      <inertia ixx="2.008e-05" ixy="0" ixz="0" iyy="2.942e-05" iyz="0" izz="2.697e-05"/>
+    </inertial>
+  </xacro:gripper_link>
+  <xacro:gripper_link name="gripper_left">
+    <inertial>
+      <origin xyz="0.016 0.003 0.0183" rpy="0 0 0"/>
+      <mass value="0.01"/>
+      <inertia ixx="3.418e-06" ixy="0" ixz="0" iyy="3.291e-06" iyz="0" izz="6.083e-07"/>
+    </inertial>
+  </xacro:gripper_link>
+  <xacro:gripper_link name="gripper_right">
+    <inertial>
+      <origin xyz="-0.016 0.003 0.0183" rpy="0 0 0"/>
+      <mass value="0.01"/>
+      <inertia ixx="3.418e-06" ixy="0" ixz="0" iyy="3.291e-06" iyz="0" izz="6.083e-07"/>
+    </inertial>
+  </xacro:gripper_link>
 
   <joint name="joint6_flange_to_gripper_base" type="fixed">
     <parent link="joint6_flange"/>
@@ -45,14 +66,14 @@
 
   <joint name="gripper_controller" type="prismatic">
     <axis xyz="1 0 0"/>
-    <limit effort="1000.0" lower="-0.007" upper="0.0" velocity="0"/>
+    <limit effort="1000.0" lower="-0.007" upper="0.0" velocity="0.05"/>
     <parent link="gripper_base"/>
     <child link="gripper_left"/>
   </joint>
 
   <joint name="gripper_base_to_gripper_right" type="prismatic">
     <axis xyz="1 0 0"/>
-    <limit effort="1000.0" lower="0.0" upper="0.007" velocity="0"/>
+    <limit effort="1000.0" lower="0.0" upper="0.007" velocity="0.05"/>
     <parent link="gripper_base"/>
     <child link="gripper_right"/>
     <mimic joint="gripper_controller" multiplier="-1.0" offset="0"/>
