@@ -12,6 +12,8 @@ version = "0.1.0"
 build = "colcon build --symlink-install --base-paths src external_packages/myagv_ros2/myagv_description external_packages/mycobot_ros2/mycobot_description"
 # Converts the URDF to MJCF in src/emma_simulation/mujoco/; rerun after changing the URDF or mujoco_inputs.xml.
 gen-mjcf = { cmd = "bash src/emma_simulation/scripts/gen_mjcf.sh", depends-on = ["build"] }
+# Robot model in RViz with joint sliders, no physics. Extra args pass through, e.g. `pixi run display model:=arm`.
+display = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_description display.launch.py \"$@\"' --", depends-on = ["build"] }
 # Extra args pass through to the launch file, e.g. `pixi run sim headless:=true`. Builds first so
 # newly generated MJCF files are installed.
 sim = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py \"$@\"' --", depends-on = ["build"] }

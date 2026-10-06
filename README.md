@@ -26,7 +26,7 @@ pixi run build
 ## View the robot
 
 ```bash
-pixi run bash -c "source install/setup.bash && ros2 launch emma_description display.launch.py"
+pixi run display
 ```
 
 ## Simulate the robot

@@ -20,7 +20,7 @@ The base description and meshes come from `myagv_description` and the arm meshes
 ## Running
 
 ```bash
-pixi run bash -c "source install/setup.bash && ros2 launch emma_description display.launch.py"
+pixi run display
 ```
 
 | Launch argument | Values | Default | Effect |
