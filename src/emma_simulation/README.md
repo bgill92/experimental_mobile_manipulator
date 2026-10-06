@@ -12,7 +12,7 @@ standing on four mecanum wheels modelled with passive rollers.
 
 | Path | What it is |
 |---|---|
-| `launch/sim.launch.py` | Starts MuJoCo + controller manager, `robot_state_publisher`, controller spawner, and RViz. |
+| `launch/sim.launch.py` | Starts MuJoCo + controller manager, `robot_state_publisher`, controller spawner, and RViz. The arm starts folded back over the base (`initial_value`s in `emma.urdf.xacro`). |
 | `config/controllers.yaml` | Controller manager and controller parameters. |
 | `config/wheel_pids.yaml` | Velocity PID gains the MuJoCo plugin uses to drive the wheel motors. |
 | `mujoco/scene.xml` | Top-level MJCF: floor, lights, visual settings; includes the robot model. |

@@ -84,11 +84,11 @@
   <xacro:arg name="pids_config_file" default=""/>
   <xacro:arg name="headless" default="false"/>
 
-  <xacro:macro name="position_joint" params="name">
+  <xacro:macro name="position_joint" params="name initial:=0.0">
     <joint name="${name}">
       <command_interface name="position"/>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">${initial}</param>
       </state_interface>
       <state_interface name="velocity"/>
     </joint>
@@ -114,14 +114,16 @@
       <xacro:velocity_joint name="front_right_wheel_joint"/>
       <xacro:velocity_joint name="rear_left_wheel_joint"/>
       <xacro:velocity_joint name="rear_right_wheel_joint"/>
+      <!-- Starting pose: arm folded back over the base. -->
       <xacro:position_joint name="joint2_to_joint1"/>
-      <xacro:position_joint name="joint3_to_joint2"/>
-      <xacro:position_joint name="joint4_to_joint3"/>
-      <xacro:position_joint name="joint5_to_joint4"/>
+      <xacro:position_joint name="joint3_to_joint2" initial="2.259"/>
+      <xacro:position_joint name="joint4_to_joint3" initial="-2.505"/>
+      <xacro:position_joint name="joint5_to_joint4" initial="-0.495"/>
       <xacro:position_joint name="joint6_to_joint5"/>
       <xacro:position_joint name="joint6output_to_joint6"/>
       <xacro:if value="${'$(arg gripper)' == 'parallel'}">
-        <xacro:position_joint name="gripper_controller"/>
+        <!-- Just inside the open limit (0.0); exactly at it, drift trips the joint limiter. -->
+        <xacro:position_joint name="gripper_controller" initial="-0.0005"/>
         <!-- Mimic finger: an MJCF equality constraint drives it, so it is state only. -->
         <joint name="gripper_base_to_gripper_right">
           <state_interface name="position"/>
