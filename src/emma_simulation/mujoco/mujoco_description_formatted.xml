@@ -1,0 +1,135 @@
+<mujoco model="emma">
+  <compiler angle="radian" meshdir="assets/" texturedir="assets/" />
+  <asset>
+    <mesh file="full/myagv_base/myagv_base.obj" scale="0.0254 0.0254 0.0254" />
+    <material name="material_myagv_base_0" specular="0.20000000000000004" shininess="1.0" rgba="0.98039216 0.98039216 0.98039216 1.0" />
+    <mesh file="full/myagv_up/myagv_up.obj" scale="0.0254 0.0254 0.0254" />
+    <material name="material_myagv_up_0" specular="0.20000000000000004" shininess="1.0" rgba="0.98039216 0.98039216 0.98039216 1.0" />
+    <mesh file="full/joint1/joint1.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint1_0" texture="material_joint1_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint1_0" file="full/joint1/material_joint1_0.png" />
+    <mesh file="full/joint2/joint2.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint2_0" texture="material_joint2_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint2_0" file="full/joint2/material_joint2_0.png" />
+    <mesh file="full/joint3/joint3.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint3_0" texture="material_joint3_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint3_0" file="full/joint3/material_joint3_0.png" />
+    <mesh file="full/joint4/joint4.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint4_0" texture="material_joint4_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint4_0" file="full/joint4/material_joint4_0.png" />
+    <mesh file="full/joint5/joint5.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint5_0" texture="material_joint5_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint5_0" file="full/joint5/material_joint5_0.png" />
+    <mesh file="full/joint6/joint6.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint6_0" texture="material_joint6_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint6_0" file="full/joint6/material_joint6_0.png" />
+    <mesh file="full/joint7/joint7.obj" scale="1.0 1.0 1.0" />
+    <material name="material_joint7_0" texture="material_joint7_0" specular="0.4000000000000001" shininess="0.001" />
+    <texture type="2d" name="material_joint7_0" file="full/joint7/material_joint7_0.png" />
+    <mesh file="full/gripper_base/gripper_base.obj" scale="0.001 0.001 0.001" />
+    <material name="material_gripper_base_0" specular="0.20000000000000004" shininess="1.0" rgba="0.98039216 0.98039216 0.98039216 1.0" />
+    <mesh file="full/gripper_left/gripper_left.obj" scale="0.001 0.001 0.001" />
+    <material name="material_gripper_left_0" specular="0.20000000000000004" shininess="1.0" rgba="0.98039216 0.98039216 0.98039216 1.0" />
+    <mesh file="full/gripper_right/gripper_right.obj" scale="0.001 0.001 0.001" />
+    <material name="material_gripper_right_0" specular="0.20000000000000004" shininess="1.0" rgba="0.98039216 0.98039216 0.98039216 1.0" />
+  </asset>
+  <worldbody>
+    <body name="base_footprint">
+      <inertial pos="0.0126818 -0.00421299 0.0727623" quat="0.000293806 0.675336 7.51333e-05 0.737511" mass="3.85" diaginertia="0.0475189 0.0392568 0.0235355" /><freejoint name="floating_base_joint" />
+      <body name="joint2" pos="0.0981 -0.0044 0.26376">
+        <inertial pos="0 -0.0063 -0.0206" mass="0.15" diaginertia="0.0001407 0.0001236 7.47e-05" />
+        <joint name="joint2_to_joint1" range="-2.9321 2.9321" actuatorfrcrange="-1000 1000" damping="1" armature="0.01" />
+        <body name="joint3" quat="0.499998 0.500002 0.5 -0.5">
+          <inertial pos="-0.054 0 0.0576" quat="0.5 0.5 0.5 0.5" mass="0.1" diaginertia="0.0002284 0.000222 4.478e-05" />
+          <joint name="joint3_to_joint2" range="-2.4434 2.4434" actuatorfrcrange="-1000 1000" damping="1" armature="0.01" />
+          <body name="joint4" pos="-0.1104 0 0">
+            <inertial pos="-0.0468 0 0.0065" quat="0.5 0.5 0.5 0.5" mass="0.1" diaginertia="0.0001838 0.0001715 4.339e-05" />
+            <joint name="joint4_to_joint3" range="-2.6179 2.6179" actuatorfrcrange="-1000 1000" damping="1" armature="0.01" />
+            <body name="joint5" pos="-0.096 0 0.06462" quat="0.707105 0 0 -0.707108">
+              <inertial pos="0 -0.0084 -0.0073" quat="0.707107 0.707107 0 0" mass="0.08" diaginertia="3.965e-05 3.106e-05 2.845e-05" />
+              <joint name="joint5_to_joint4" range="-2.6179 2.6179" actuatorfrcrange="-1000 1000" damping="0.5" armature="0.01" />
+              <body name="joint6" pos="0 -0.07318 0" quat="0.499998 0.5 -0.5 0.500002">
+                <inertial pos="0 0.0067 -0.0094" mass="0.07" diaginertia="3.777e-05 2.762e-05 2.736e-05" />
+                <joint name="joint6_to_joint5" range="-2.7052 2.7925" actuatorfrcrange="-1000 1000" damping="0.5" armature="0.01" />
+                <body name="joint6_flange" pos="0 0.0456 0" quat="0.707105 -0.707108 0 0">
+                  <inertial pos="0 -0.00678571 0.0203" quat="0.701311 0.0903482 -0.0903482 0.701311" mass="0.07" diaginertia="5.16664e-05 4.23463e-05 3.19049e-05" />
+                  <joint name="joint6output_to_joint6" range="-3.14159 3.14159" actuatorfrcrange="-1000 1000" damping="0.5" armature="0.01" />
+                  <body name="gripper_left" pos="0 0 0.034">
+                    <inertial pos="0.016 0.003 0.0183" mass="0.01" diaginertia="3.418e-06 3.291e-06 6.083e-07" />
+                    <joint name="gripper_controller" type="slide" range="-0.007 0" actuatorfrcrange="-1000 1000" axis="1 0 0" />
+                    <geom material="material_gripper_left_0" mesh="gripper_left" class="visual" pos="0 0 0" quat="" />
+                    <geom mesh="gripper_left" class="collision" pos="0 0 0" quat="" />
+                    <site name="gripper_left" pos="0 0 0" quat="1.0 0 0 0" />
+                  </body>
+                  <body name="gripper_right" pos="0 0 0.034">
+                    <inertial pos="-0.016 0.003 0.0183" mass="0.01" diaginertia="3.418e-06 3.291e-06 6.083e-07" />
+                    <joint name="gripper_base_to_gripper_right" type="slide" range="0 0.007" actuatorfrcrange="-1000 1000" axis="1 0 0" />
+                    <geom material="material_gripper_right_0" mesh="gripper_right" class="visual" pos="0 0 0" quat="" />
+                    <geom mesh="gripper_right" class="collision" pos="0 0 0" quat="" />
+                    <site name="gripper_right" pos="0 0 0" quat="1.0 0 0 0" />
+                  </body>
+                  <geom material="material_joint7_0" mesh="joint7" class="visual" pos="0 0 -0.012" quat="1 0 0 0" />
+                  <geom mesh="joint7" class="collision" pos="0 0 -0.012" quat="1 0 0 0" />
+                  <geom material="material_gripper_base_0" mesh="gripper_base" class="visual" pos="0 0 0.034" quat="1 0 0 0" />
+                  <geom mesh="gripper_base" class="collision" pos="0 0 0.034" quat="1 0 0 0" />
+                  <site name="joint6_flange" pos="0 0 0" quat="1.0 0 0 0" />
+                  <site name="gripper_base" pos="0 0 0.034" quat="1.0 0 0 0" />
+                </body>
+                <geom material="material_joint6_0" mesh="joint6" class="visual" pos="0 0 -0.038" quat="1 0 0 0" />
+                <geom mesh="joint6" class="collision" pos="0 0 -0.038" quat="1 0 0 0" />
+                <site name="joint6" pos="0 0 0" quat="1.0 0 0 0" />
+              </body>
+              <geom material="material_joint5_0" mesh="joint5" class="visual" pos="0 0 -0.03356" quat="0.707105 -0.707108 0 0" />
+              <geom mesh="joint5" class="collision" pos="0 0 -0.03356" quat="0.707105 -0.707108 0 0" />
+              <site name="joint5" pos="0 0 0" quat="1.0 0 0 0" />
+            </body>
+            <geom material="material_joint4_0" mesh="joint4" class="visual" pos="0 0 0.03056" quat="0.707105 0 -0.707108 0" />
+            <geom mesh="joint4" class="collision" pos="0 0 0.03056" quat="0.707105 0 -0.707108 0" />
+            <site name="joint4" pos="0 0 0" quat="1.0 0 0 0" />
+          </body>
+          <geom material="material_joint3_0" mesh="joint3" class="visual" pos="0 0 0.03256" quat="0.707105 0 -0.707108 0" />
+          <geom mesh="joint3" class="collision" pos="0 0 0.03256" quat="0.707105 0 -0.707108 0" />
+          <site name="joint3" pos="0 0 0" quat="1.0 0 0 0" />
+        </body>
+        <geom material="material_joint2_0" mesh="joint2" class="visual" pos="0 0 -0.06096" quat="0.707105 0 0 -0.707108" />
+        <geom mesh="joint2" class="collision" pos="0 0 -0.06096" quat="0.707105 0 0 -0.707108" />
+        <site name="joint2" pos="0 0 0" quat="1.0 0 0 0" />
+      </body>
+      <geom material="material_myagv_base_0" mesh="myagv_base" class="visual" pos="0 0 0" quat="1 0 0 0" />
+      <geom mesh="myagv_base" class="collision" pos="0 0 0" quat="1 0 0 0" />
+      <geom material="material_myagv_up_0" mesh="myagv_up" class="visual" pos="0 0 0" quat="1 0 0 0" />
+      <geom mesh="myagv_up" class="collision" pos="0 0 0" quat="1 0 0 0" />
+      <geom material="material_joint1_0" mesh="joint1" class="visual" pos="0.0981 -0.0044 0.1322" quat="0.707105 0 0 -0.707108" />
+      <geom mesh="joint1" class="collision" pos="0.0981 -0.0044 0.1322" quat="0.707105 0 0 -0.707108" />
+      <site name="base_footprint" pos="0 0 0" quat="1.0 0 0 0" />
+      <site name="base_link" pos="0 0 0" quat="1.0 0 0 0" />
+      <site name="base_inertia" pos="0 0 0" quat="1.0 0 0 0" />
+      <site name="g_base" pos="0.0981 -0.0044 0.1322" quat="1.0 0 0 0" />
+      <site name="joint1" pos="0.0981 -0.0044 0.1322" quat="1.0 0 0 0" />
+    <geom name="base_contact" type="box" size="0.155 0.115 0.02" pos="0.007 -0.004 0.02" contype="0" conaffinity="1" condim="3" group="3" /></body>
+  </worldbody>
+  <equality>
+    <joint joint1="gripper_base_to_gripper_right" joint2="gripper_controller" polycoef="0 -1 0 0 0" />
+  </equality>
+  <default>
+    <geom contype="0" conaffinity="0" />
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0" />
+    </default>
+    <default class="collision">
+      <geom group="3" type="mesh" />
+    </default>
+  </default>
+  <equality>
+    <joint joint1="gripper_base_to_gripper_right" joint2="gripper_controller" polycoef="0 -1 0 0 0" solimp="0.95 0.99 0.001" solref="0.005 1" />
+  </equality>
+  <actuator>
+    <position name="joint2_to_joint1" joint="joint2_to_joint1" kp="50" dampratio="1.0" ctrlrange="-2.9321 2.9321" />
+    <position name="joint3_to_joint2" joint="joint3_to_joint2" kp="50" dampratio="1.0" ctrlrange="-2.4434 2.4434" />
+    <position name="joint4_to_joint3" joint="joint4_to_joint3" kp="50" dampratio="1.0" ctrlrange="-2.6179 2.6179" />
+    <position name="joint5_to_joint4" joint="joint5_to_joint4" kp="20" dampratio="1.0" ctrlrange="-2.6179 2.6179" />
+    <position name="joint6_to_joint5" joint="joint6_to_joint5" kp="20" dampratio="1.0" ctrlrange="-2.7052 2.7925" />
+    <position name="joint6output_to_joint6" joint="joint6output_to_joint6" kp="20" dampratio="1.0" ctrlrange="-3.14159 3.14159" />
+    <position name="gripper_controller" joint="gripper_controller" kp="100" dampratio="1.0" ctrlrange="-0.007 0" />
+  </actuator>
+</mujoco>
