@@ -9,6 +9,8 @@ controller_manager:
     # Not named gripper_controller: that is the gripper joint's name.
     gripper_action_controller:
       type: parallel_gripper_action_controller/GripperActionController
+    mecanum_drive_controller:
+      type: mecanum_drive_controller/MecanumDriveController
 
 arm_controller:
   ros__parameters:
@@ -29,3 +31,21 @@ arm_controller:
 gripper_action_controller:
   ros__parameters:
     joint: gripper_controller
+
+mecanum_drive_controller:
+  ros__parameters:
+    reference_timeout: 0.5  # s; the base stops if commands stop.
+    front_left_wheel_command_joint_name: front_left_wheel_joint
+    front_right_wheel_command_joint_name: front_right_wheel_joint
+    rear_right_wheel_command_joint_name: rear_right_wheel_joint
+    rear_left_wheel_command_joint_name: rear_left_wheel_joint
+    # Must match the wheels in emma.urdf.xacro. lx + ly averages the front/rear and
+    # left/right wheel offsets; the offset re-centres them, since the base mesh is
+    # not centred on base_footprint.
+    kinematics:
+      wheels_radius: 0.04
+      sum_of_robot_center_projection_on_X_Y_axis: 0.2057
+      base_frame_offset: {x: 0.0055, y: -0.0043, theta: 0.0}
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    enable_odom_tf: true

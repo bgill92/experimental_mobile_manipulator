@@ -6,6 +6,7 @@ Usage: postprocess_mjcf.py <mjcf_dir>
 Rewrites <mjcf_dir>/mujoco_description_formatted.xml in place. Safe to re-run.
 """
 
+import math
 import sys
 import xml.etree.ElementTree as ET
 
@@ -18,22 +19,50 @@ MESH_SCALES = {
     "gripper_": "0.001 0.001 0.001",  # Millimetres.
 }
 
-# ponytail: box stand-in for the myAGV wheels so the base rests on the floor. Replace
-# it once the base gets real wheel joints. Sized to the base mesh footprint.
-BASE_CONTACT = {
-    "name": "base_contact",
-    "type": "box",
-    "size": "0.155 0.115 0.02",
-    "pos": "0.007 -0.004 0.02",
-    "contype": "0",
-    "conaffinity": "1",
-    "condim": "3",
-    "group": "3",
+# Mecanum rollers, ported from JunHeonYoon/mujoco_mecanum (MIT), wheel_code_gen.py. Each
+# wheel gets free-spinning spheres on hinges along the roller axis, so the contact friction
+# acts like real rollers. Two changes from upstream:
+# - Spheres use the roller radius, not the wheel radius (its Summit XL example does the same).
+# - Upstream tilts each roller toward the neighbouring spoke. On a wheel this small that comes
+#   out at ~14 degrees instead of 45, and the base strafes at a quarter speed. So the axis is
+#   set to 45 degrees directly.
+# Must match wheel_radius in emma.urdf.xacro.
+WHEEL_RADIUS = 0.04
+N_ROLLERS = 12
+ROLLER_RATIO = 0.08 / 0.127  # Upstream's roller-to-wheel radius ratio.
+# Wheel body -> roller tilt (sign of the tangential axis part). Opposite corners match so the
+# rollers form the X that mecanum_drive_controller's kinematics assume; check_mecanum.py
+# catches a flipped sign.
+WHEELS = {
+    "front_left_wheel": -1,
+    "front_right_wheel": 1,
+    "rear_left_wheel": 1,
+    "rear_right_wheel": -1,
 }
 
 
 def fmt(values) -> str:
     return " ".join(f"{v:.6g}" for v in values)
+
+
+def add_rollers(wheel: ET.Element, tilt: int) -> None:
+    roller_r = WHEEL_RADIUS * ROLLER_RATIO
+    for i in range(N_ROLLERS):
+        angle = 2 * math.pi * i / N_ROLLERS
+        c, s = math.cos(angle), math.sin(angle)
+        body = ET.SubElement(wheel, "body", {
+            "name": f"{wheel.get('name')}_roller_{i}",
+            # Sphere surface reaches exactly the wheel radius.
+            "pos": fmt([(WHEEL_RADIUS - roller_r) * c, 0, (WHEEL_RADIUS - roller_r) * s]),
+        })
+        ET.SubElement(body, "inertial", {"pos": "0 0 0", "mass": "0.001", "diaginertia": "1e-6 1e-6 1e-6"})
+        # 45 degrees between the wheel axle (y) and the rim tangent.
+        ET.SubElement(body, "joint", {"name": f"{wheel.get('name')}_roller_{i}_joint", "type": "hinge",
+                                      "axis": fmt([-tilt * s, 1, tilt * c]), "damping": "0.0001",
+                                      "limited": "false"})
+        # Touches the floor (contype 1) and nothing else.
+        ET.SubElement(body, "geom", {"type": "sphere", "size": fmt([roller_r]), "contype": "0",
+                                     "conaffinity": "1", "condim": "3", "group": "3"})
 
 
 def main() -> None:
@@ -62,12 +91,14 @@ def main() -> None:
             if name.startswith(prefix):
                 mesh.set("scale", scale)
 
-    base = root.find("./worldbody/body[@name='base_footprint']")
-    if base is None:
-        sys.exit("base_footprint body not found; did the converter run with -f?")
-    if base.find(f"geom[@name='{BASE_CONTACT['name']}']") is None:
-        ET.SubElement(base, "geom", BASE_CONTACT)
+    for name, tilt in WHEELS.items():
+        wheel = root.find(f".//body[@name='{name}']")
+        if wheel is None:
+            sys.exit(f"{name} body not found; does the URDF still define it?")
+        if wheel.find("body") is None:
+            add_rollers(wheel, tilt)
 
+    ET.indent(tree)
     tree.write(path)
 
 

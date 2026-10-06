@@ -21,7 +21,7 @@ pixi run build
 - [`emma_description`](src/emma_description/README.md): URDF of the robot (myAGV, myCobot 280 M5
   and parallel gripper), RViz display launch, and the changes made to the upstream models.
 - [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
-  mujoco_ros2_control, with arm and gripper controllers.
+  mujoco_ros2_control, with arm, gripper and mecanum base controllers.
 
 ## View the robot
 

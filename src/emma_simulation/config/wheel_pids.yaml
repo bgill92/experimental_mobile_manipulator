@@ -1,0 +1,39 @@
+# Velocity loops for the wheel motors. mujoco_ros2_control runs them at the controller
+# rate and writes torque to the MuJoCo motor actuators. Loaded through the pids_config_file
+# hardware param; scripts/check_mecanum.py reads them too.
+/**:
+  ros__parameters:
+    pid_gains:
+      velocity:
+        front_left_wheel_joint:
+          p: 0.2
+          i: 0.0
+          d: 0.0
+          u_clamp_max: 1.0  # N·m, same as the motor ctrlrange.
+          u_clamp_min: -1.0
+          i_clamp_max: 0.5
+          i_clamp_min: -0.5
+        front_right_wheel_joint:
+          p: 0.2
+          i: 0.0
+          d: 0.0
+          u_clamp_max: 1.0  # N·m, same as the motor ctrlrange.
+          u_clamp_min: -1.0
+          i_clamp_max: 0.5
+          i_clamp_min: -0.5
+        rear_left_wheel_joint:
+          p: 0.2
+          i: 0.0
+          d: 0.0
+          u_clamp_max: 1.0  # N·m, same as the motor ctrlrange.
+          u_clamp_min: -1.0
+          i_clamp_max: 0.5
+          i_clamp_min: -0.5
+        rear_right_wheel_joint:
+          p: 0.2
+          i: 0.0
+          d: 0.0
+          u_clamp_max: 1.0  # N·m, same as the motor ctrlrange.
+          u_clamp_min: -1.0
+          i_clamp_max: 0.5
+          i_clamp_min: -0.5

@@ -40,17 +40,18 @@ pixi run bash -c "source install/setup.bash && ros2 launch emma_description disp
 | `ros2_control` | `none` | `mujoco` adds a `<ros2_control>` block using `mujoco_ros2_control/MujocoSystemInterface`. Only applies to `model:=both`. |
 | `mujoco_model` | `""` | MJCF scene path passed to the MuJoCo hardware plugin. |
 | `headless` | `false` | Runs MuJoCo without its viewer. |
+| `pids_config_file` | `""` | Wheel velocity PID gains passed to the MuJoCo hardware plugin. |
 
 With `ros2_control:=mujoco` the block exposes:
 - the six arm joints and `gripper_controller` with a `position` command and `position`/`velocity` state;
-- `gripper_base_to_gripper_right` (the mimic finger) as state only, because the simulator drives it.
-
-The base is not exposed yet.
+- `gripper_base_to_gripper_right` (the mimic finger) as state only, because the simulator drives it;
+- the four wheel joints with a `velocity` command and `position`/`velocity` state.
 
 ## Robot structure
 
 TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_flange → gripper_base →
-{gripper_left, gripper_right}`. A mass-only `base_inertia` link also hangs off `base_footprint`.
+{gripper_left, gripper_right}`. A mass-only `base_inertia` link and the four
+`{front,rear}_{left,right}_wheel` links also hang off `base_footprint`.
 
 | Joint | Type | Range |
 |---|---|---|
@@ -62,6 +63,7 @@ TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_
 | `joint6output_to_joint6` | revolute | ±3.14159 rad |
 | `gripper_controller` | prismatic | -0.007 (closed) to 0 (open) m |
 | `gripper_base_to_gripper_right` | prismatic, mimic of `gripper_controller` (×-1) | 0 to 0.007 m |
+| `{front,rear}_{left,right}_wheel_joint` | continuous, axis +y | — |
 
 The arm joint names are upstream's and read backwards: `joint2_to_joint1` rotates link
 `joint2` relative to `joint1`.
@@ -85,7 +87,8 @@ flange mount from `mycobot_280_jn_parallel_gripper.urdf`, 34 mm along the flange
   name. It is not used here.
 
 **Base** (`myagv_ros2` `galactic-JN`, `afb054b`, `myAGV.urdf`): used unchanged, since the
-submodule is not edited. Its mass is added through the `base_inertia` link in `emma.urdf.xacro`.
+submodule is not edited. `emma.urdf.xacro` adds what it lacks: the mass through the
+`base_inertia` link, and the four wheel links and joints, which upstream does not have.
 
 ## Assumptions and caveats
 
@@ -94,17 +97,21 @@ submodule is not edited. Its mass is added through the `base_inertia` link in `e
   measured on the real robot.
 - **Masses and inertias are estimates**:
   - The arm link masses sum to the ~0.85 kg spec and the gripper is 70 g.
-  - The base is 3.6 kg.
+  - The base is 3.6 kg, plus 0.1 kg per wheel.
   - Every inertia tensor is a solid box over the link mesh's bounding box, with the centre of
-    mass at the box centre.
+    mass at the box centre. The wheels are solid cylinders instead.
   - Good enough for simulation; replace with measured or CAD values if dynamics matter.
 - **Gripper travel**: the 7 mm per finger (15 mm open, 1 mm closed between fingertips) is
   upstream's value and has not been checked on the real gripper.
 - **Gripper velocity limit**: 0.05 m/s is a placeholder.
-- **Effort limits**: all joints keep upstream's 1000. That is unrealistic but harmless.
-- **The base has no wheels**: the myAGV URDF is two static meshes without collision geometry.
-  The real drive is holonomic (vx, vy, ω — very likely mecanum). Wheel links and joints need
-  measured wheel geometry.
+- **Effort limits**: all joints use upstream's 1000, the wheels included. That is unrealistic
+  but harmless; the simulated wheel motors clamp torque on their own.
+- **Wheel velocity limit**: 30 rad/s is a placeholder.
+- **Wheel geometry is estimated from the base mesh**: radius 0.04 m, centres at x 0.1124 /
+  -0.1014 and y 0.0945 / -0.1031 (the mesh sits about 4 mm toward -y). Each wheel is a
+  `continuous` joint about y, 0.1 kg, with no visual (the base mesh draws the wheels, so they
+  don't visibly spin) and no collision (`emma_simulation` adds mecanum rollers). Re-measure on
+  the real robot if odometry matters.
 - **Mesh units differ**: arm meshes are metres, gripper meshes millimetres, base meshes inches.
   RViz reads the COLLADA `<unit>` tag so they all display correctly. Tools that ignore it, such
   as the MuJoCo converter, need rescaling (`emma_simulation` handles this).

@@ -10,6 +10,10 @@ Move the arm:
         joint6_to_joint5, joint6output_to_joint6], points: \\
         [{positions: [0.5, -0.5, 0.5, 0.0, 0.3, 0.0], time_from_start: {sec: 3}}]}}"
 
+Drive the base (vx, vy in m/s, wz in rad/s; stops 0.5 s after the last message):
+    ros2 topic pub -r 10 /mecanum_drive_controller/reference geometry_msgs/msg/TwistStamped \\
+        "{twist: {linear: {x: 0.1, y: 0.0}, angular: {z: 0.0}}}"
+
 Close the gripper (0 is open, -0.007 is closed):
     ros2 action send_goal /gripper_action_controller/gripper_cmd \\
         control_msgs/action/ParallelGripperCommand \\
@@ -29,6 +33,7 @@ def generate_launch_description():
     share = FindPackageShare('emma_simulation')
     description_share = FindPackageShare('emma_description')
     controllers_file = PathJoinSubstitution([share, 'config', 'controllers.yaml'])
+    pids_file = PathJoinSubstitution([share, 'config', 'wheel_pids.yaml'])
 
     robot_description = ParameterValue(
         Command([
@@ -36,6 +41,7 @@ def generate_launch_description():
             ' ros2_control:=mujoco',
             ' mujoco_model:=', LaunchConfiguration('mujoco_model'),
             ' headless:=', LaunchConfiguration('headless'),
+            ' pids_config_file:=', pids_file,
         ]),
         value_type=str,
     )
@@ -71,6 +77,7 @@ def generate_launch_description():
             executable='spawner',
             arguments=[
                 'joint_state_broadcaster', 'arm_controller', 'gripper_action_controller',
+                'mecanum_drive_controller',
                 '--param-file', controllers_file,
             ],
         ),
