@@ -79,4 +79,13 @@
     <mimic joint="gripper_controller" multiplier="-1.0" offset="0"/>
   </joint>
 
+  <!-- Tool centre point between the fingertips (they end 48.5 mm out), the frame
+       emma_manipulation plans grasps for. z points out of the gripper. -->
+  <link name="tcp"/>
+  <joint name="gripper_base_to_tcp" type="fixed">
+    <parent link="gripper_base"/>
+    <child link="tcp"/>
+    <origin xyz="0 0 0.045" rpy="0 0 0"/>
+  </joint>
+
 </robot>
