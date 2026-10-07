@@ -65,6 +65,26 @@ def add_rollers(wheel: ET.Element, tilt: int) -> None:
                                      "conaffinity": "1", "condim": "3", "group": "3"})
 
 
+# Finger contact: the fingers (contype bit 4) touch only graspable objects (bit 2), so they never
+# hit each other, the arm or the base. A soft-ish, high-friction contact with condim 4 adds
+# torsional friction so a pinched block does not spin out. See the README's collision-bits table.
+FINGER_MESHES = ("gripper_left", "gripper_right")
+FINGER_CONTACT = {
+    "contype": "4",
+    "conaffinity": "2",
+    "condim": "4",
+    "friction": "1.5 0.02 0.0005",
+    "solref": "0.005 1",
+    "solimp": "0.95 0.99 0.001",
+}
+
+
+def set_finger_collisions(root: ET.Element) -> None:
+    for geom in root.iter("geom"):
+        if geom.get("class") == "collision" and geom.get("mesh") in FINGER_MESHES:
+            geom.attrib.update(FINGER_CONTACT)
+
+
 def main() -> None:
     mjcf_dir = sys.argv[1].rstrip("/")
     path = f"{mjcf_dir}/mujoco_description_formatted.xml"
@@ -97,6 +117,8 @@ def main() -> None:
             sys.exit(f"{name} body not found; does the URDF still define it?")
         if wheel.find("body") is None:
             add_rollers(wheel, tilt)
+
+    set_finger_collisions(root)
 
     ET.indent(tree)
     tree.write(path)

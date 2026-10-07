@@ -34,6 +34,11 @@ arm_controller:
 gripper_action_controller:
   ros__parameters:
     joint: gripper_controller
+    # The default 10 mm tolerance exceeds the 7 mm stroke, so every goal would succeed at once.
+    goal_tolerance: 0.001
+    # Fingers stopped by a grasped object count as success, not an abort.
+    allow_stalling: true
+    stall_timeout: 0.5
 
 mecanum_drive_controller:
   ros__parameters:

@@ -128,6 +128,9 @@ def compose(scene_xml: Path, x: float, y: float, yaw: float, freeze_kg: float) -
 
     base = robot.body("base_footprint")
     for geom in robot.geoms:
+        # Geoms that already collide (the fingers) keep their own bits.
+        if geom.contype:
+            continue
         if geom.conaffinity == 1:
             geom.conaffinity = ROLLER_CONAFFINITY
         elif geom.group == 3:
