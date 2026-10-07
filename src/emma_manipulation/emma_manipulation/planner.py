@@ -37,10 +37,12 @@ MESH_SCALES = {
     'myagv_': '0.0254 0.0254 0.0254',  # Inches.
 }
 
-# Link pairs that never need checking: the fingers only slide relative to the wrist.
+# Link pairs that never need checking: the fingers only slide relative to the wrist, and
+# the wrist camera is bolted to the gripper next to it. Pairs naming a link the URDF lacks
+# (no camera) are skipped.
 DISABLED_COLLISION_PAIRS = [
-    (finger, wrist)
-    for finger in ('gripper_left', 'gripper_right')
+    (part, wrist)
+    for part in ('gripper_left', 'gripper_right', 'wrist_camera_link')
     for wrist in ('joint6', 'joint6_flange')
 ]
 
@@ -127,7 +129,9 @@ class ArmPlanner:
         self.scene = Scene('emma', loadUrdfSceneDescriptionFromXml(urdf, package_paths))
         self.scene.addGroupFromChain(GROUP, 'g_base', tip_frame)
         self.scene.allowAdjacentLinkCollisions()
-        self.scene.setCollisions(DISABLED_COLLISION_PAIRS, False)
+        links = {link.get('name') for link in ET.fromstring(urdf).iter('link')}
+        self.scene.setCollisions(
+            [pair for pair in DISABLED_COLLISION_PAIRS if set(pair) <= links], False)
         if seed is not None:
             self.scene.setRngSeed(seed)
 

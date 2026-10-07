@@ -13,9 +13,17 @@ ARM_JOINTS = [
 ]
 
 # Arm folded back over the base; matches the ros2_control initial_value in emma.urdf.xacro.
-HOME_Q = [0.0, 2.259, -2.505, -0.495, 0.0, 0.0]
+# The wrist is tipped up (joint 4 at 0.3, not -0.495) so the wrist camera clears the arm.
+HOME_Q = [0.0, 2.259, -2.505, 0.3, 0.0, 0.0]
+
+# Wrist camera looking at BLOCK_START from 0.2 m, its optical axis 65 deg below horizontal
+# (at 45 deg the camera would sit almost over the arm base, out of reach). PLACE_XYZ and a
+# block a few cm off BLOCK_START stay in view. Found by IK in test_planner.py::test_look_pose,
+# which re-checks it.
+LOOK_Q = [0.862, 0.771, -1.533, -0.695, -0.133, 0.855]
 
 BASE_FRAME = 'base_link'
+CAMERA_FRAME = 'wrist_camera_color_optical_frame'
 TCP_FRAME = 'tcp'
 
 # Table in front of the AGV: box centre and half-size. Top at z = 0.15, x from 0.20 to 0.40.

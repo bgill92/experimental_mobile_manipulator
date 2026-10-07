@@ -88,4 +88,44 @@
     <origin xyz="0 0 0.045" rpy="0 0 0"/>
   </joint>
 
+  <!-- Wrist RGB-D camera, standing in for an Orbbec Gemini 305 (68 g, 23 x 42 x 42 mm). The mount
+       is a design choice, not a measured part: the body sits just past the +y edge of the
+       gripper_base mesh, looking along the fingers (gripper +z) and tilted 15 deg toward them so
+       the fingertips show at the bottom of the image, about 5 cm away (the minimum range is 4 cm).
+       wrist_camera_link follows REP 103 (x forward); its origin is the front face, where the
+       colour optical frame sits, so the sim camera does not render from inside the body. -->
+  <xacro:if value="${'$(arg camera)' == 'gemini305'}">
+    <link name="wrist_camera_link">
+      <inertial>
+        <origin xyz="-0.0115 0 0" rpy="0 0 0"/>
+        <mass value="0.068"/>
+        <inertia ixx="1.999e-05" ixy="0" ixz="0" iyy="1.299e-05" iyz="0" izz="1.299e-05"/>
+      </inertial>
+      <visual>
+        <origin xyz="-0.0115 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.023 0.042 0.042"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="-0.0115 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.023 0.042 0.042"/>
+        </geometry>
+      </collision>
+    </link>
+    <joint name="gripper_base_to_wrist_camera" type="fixed">
+      <parent link="gripper_base"/>
+      <child link="wrist_camera_link"/>
+      <origin xyz="0 0.037 0" rpy="0 -1.309 -1.5708"/>
+    </joint>
+    <!-- z forward, x right, y down in the image. -->
+    <link name="wrist_camera_color_optical_frame"/>
+    <joint name="wrist_camera_link_to_color_optical_frame" type="fixed">
+      <parent link="wrist_camera_link"/>
+      <child link="wrist_camera_color_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+  </xacro:if>
+
 </robot>

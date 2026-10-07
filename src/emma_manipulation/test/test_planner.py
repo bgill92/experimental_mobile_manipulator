@@ -4,8 +4,8 @@ import math
 
 from ament_index_python.packages import get_package_share_directory
 from emma_manipulation.constants import (
-    ARM_JOINTS, BLOCK_SIZE, BLOCK_START, HOME_Q, PRE_OFFSET, TABLE_CENTER,
-    TABLE_HALF_SIZE)
+    ARM_JOINTS, BLOCK_SIZE, BLOCK_START, CAMERA_FRAME, HOME_Q, LOOK_Q, PLACE_XYZ, PRE_OFFSET,
+    TABLE_CENTER, TABLE_HALF_SIZE)
 from emma_manipulation.grasp import grasp_candidates, offset
 from emma_manipulation.planner import ArmPlanner, to_joint_trajectory
 import numpy as np
@@ -108,3 +108,39 @@ def test_joint_trajectory_timing() -> None:
     assert all(b > a for a, b in zip(times, times[1:]))
     np.testing.assert_allclose(times, [0.5, 0.6, 1.1125], atol=1e-9)
     np.testing.assert_allclose(traj.points[-1].positions, HOME)
+
+
+def camera_looking_at(target, distance: float, down_deg: float) -> np.ndarray:
+    """Optical frame pose `distance` from `target`, looking along +x tilted `down_deg` down."""
+    down = math.radians(down_deg)
+    z = np.array([math.cos(down), 0.0, -math.sin(down)])
+    x = np.array([0.0, 1.0, 0.0])  # Image right; image down then points away from the robot.
+    tform = np.eye(4)
+    tform[:3, :3] = np.column_stack([x, np.cross(z, x), z])
+    tform[:3, 3] = np.asarray(target) - distance * z
+    return tform
+
+
+def test_look_pose(planner: ArmPlanner) -> None:
+    # How LOOK_Q was found: IK for the optical frame (through its fixed offset from the TCP).
+    cam_in_tcp = np.linalg.inv(planner.fk(HOME)) @ planner.fk(HOME, CAMERA_FRAME)
+    goal = camera_looking_at(BLOCK_START, 0.2, 65.0)
+    q = planner.ik(goal @ np.linalg.inv(cam_in_tcp), LOOK_Q)
+    assert q is not None
+    print(f'look pose by IK: {np.round(q, 3).tolist()}')
+
+    # The hardcoded LOOK_Q is collision free, reachable from home and sees the work area.
+    look = np.array(LOOK_Q)
+    assert not planner.has_collisions(look)
+    assert planner.plan_joint(HOME, look) is not None
+    world_to_cam = np.linalg.inv(planner.fk(look, CAMERA_FRAME))
+    f = 200 / math.tan(math.radians(65.0 / 2))  # The MuJoCo camera: fovy 65 deg, 640x400.
+    for point, margin in ((BLOCK_START, 20), (PLACE_XYZ, 40),
+                          (np.add(BLOCK_START, [0.03, 0.0, 0.0]), 40),
+                          (np.add(BLOCK_START, [0.0, -0.03, 0.0]), 40)):
+        x, y, z = world_to_cam[:3, :3] @ np.asarray(point) + world_to_cam[:3, 3]
+        u, v = f * x / z + 320, f * y / z + 200
+        assert 0.15 < z < 0.3
+        assert margin < u < 640 - margin and margin < v < 400 - margin, (point, u, v)
+    x, y, _ = world_to_cam[:3, :3] @ np.asarray(BLOCK_START) + world_to_cam[:3, 3]
+    assert math.hypot(x, y) < 0.01  # Block on the optical axis.
