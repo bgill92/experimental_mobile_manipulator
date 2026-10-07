@@ -77,26 +77,33 @@ def translation(xyz: Sequence[float]) -> np.ndarray:
     return tform
 
 
-class _PlannerBehaviour(py_trees.behaviour.Behaviour):
-    """Base for behaviours that use the planner and the arm's current joint state."""
+class _LoggingBehaviour(py_trees.behaviour.Behaviour):
+    """Base that keeps the tree's ROS node (from `setup`) to log feedback messages."""
 
-    def __init__(self, name: str, planner: ArmPlanner) -> None:
+    def __init__(self, name: str) -> None:
         super().__init__(name)
-        self.planner = planner
         self.node: Any = None
         self.bb = self.attach_blackboard_client(name=name)
-        self.bb.register_key(JOINT_STATE, access=Access.READ)
 
     def setup(self, **kwargs: Any) -> None:
         self.node = kwargs.get('node')
-
-    def current_q(self) -> np.ndarray:
-        return self.planner.set_q(self.bb.get(JOINT_STATE))
 
     def log(self, message: str) -> None:
         self.feedback_message = message
         if self.node is not None:
             self.node.get_logger().info(f'[{self.name}] {message}')
+
+
+class _PlannerBehaviour(_LoggingBehaviour):
+    """Base for behaviours that use the planner and the arm's current joint state."""
+
+    def __init__(self, name: str, planner: ArmPlanner) -> None:
+        super().__init__(name)
+        self.planner = planner
+        self.bb.register_key(JOINT_STATE, access=Access.READ)
+
+    def current_q(self) -> np.ndarray:
+        return self.planner.set_q(self.bb.get(JOINT_STATE))
 
 
 class _PlanBehaviour(_PlannerBehaviour):
@@ -239,7 +246,7 @@ class DetachBlock(_PlannerBehaviour):
         return Status.SUCCESS
 
 
-class CheckPlaced(py_trees.behaviour.Behaviour):
+class CheckPlaced(_LoggingBehaviour):
     """
     Check the block's ground-truth position (from `free_joints`) against `place_xyz`.
 
@@ -252,12 +259,7 @@ class CheckPlaced(py_trees.behaviour.Behaviour):
         super().__init__(name)
         self.place_xyz = np.asarray(place_xyz, dtype=float)
         self.tol = tol
-        self.node: Any = None
-        self.bb = self.attach_blackboard_client(name=name)
         self.bb.register_key(FREE_JOINTS, access=Access.READ)
-
-    def setup(self, **kwargs: Any) -> None:
-        self.node = kwargs.get('node')
 
     def update(self) -> Status:
         msg: FreeJointStateArray = self.bb.get(FREE_JOINTS)
@@ -265,12 +267,10 @@ class CheckPlaced(py_trees.behaviour.Behaviour):
             if joint.name == BLOCK:
                 p = joint.pose.pose.position
                 error = float(np.linalg.norm(np.array([p.x, p.y, p.z]) - self.place_xyz))
-                self.feedback_message = (
+                self.log(
                     f'block at [{p.x:.3f} {p.y:.3f} {p.z:.3f}], {error * 1000:.1f} mm from target')
-                if self.node is not None:
-                    self.node.get_logger().info(f'[{self.name}] {self.feedback_message}')
                 return Status.SUCCESS if error <= self.tol else Status.FAILURE
-        self.feedback_message = f'no "{BLOCK}" in {FREE_JOINTS_TOPIC}'
+        self.log(f'no "{BLOCK}" in {FREE_JOINTS_TOPIC}')
         return Status.FAILURE
 
 

@@ -7,6 +7,7 @@ Exits 0 when the tree succeeds (block placed near PLACE_XYZ, arm home), 1 otherw
 """
 
 import sys
+import time
 
 from emma_behaviors.behaviours import (
     AttachBlock, CheckPlaced, close_gripper, ComputeGraspPoses, DetachBlock, execute,
@@ -73,8 +74,9 @@ def wait_for_urdf(node: Node, timeout: float = 30.0) -> str:
     latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
     sub = node.create_subscription(String, '/robot_description',
                                    lambda msg: urdf.append(msg.data), latched)
-    end = node.get_clock().now().nanoseconds + timeout * 1e9
-    while not urdf and node.get_clock().now().nanoseconds < end:
+    # Wall time: with use_sim_time the node clock stands still until the sim publishes /clock.
+    end = time.monotonic() + timeout
+    while not urdf and time.monotonic() < end:
         rclpy.spin_once(node, timeout_sec=0.1)
     node.destroy_subscription(sub)
     if not urdf:

@@ -108,7 +108,8 @@ block lands upright whichever tilt the pregrasp move picked.
 - Any behaviour failing (no IK, no plan, a rejected or aborted goal, the block not within 20 mm
   of `PLACE_XYZ`) fails the attempt. `Retry` runs the whole sequence once more, starting
   from the block pose; `ComputeGraspPoses` re-adds the block to the planning scene where
-  `block_pose` says it is.
+  `block_pose` says it is. That is still the constant `BLOCK_START`, so if the first attempt
+  dropped or moved the block, the retry misses it and `CheckPlaced` fails again.
 - After two failed attempts, `Recover` opens the gripper, detaches the block in the planning
   scene, plans home, and then returns FAILURE, so the node exits 1.
 - There are no per-move timeouts; `pick-check`'s 240 s limit bounds the whole run.
