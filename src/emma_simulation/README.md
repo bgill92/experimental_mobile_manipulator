@@ -99,8 +99,9 @@ Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
   Compare it with `/mecanum_drive_controller/odometry` to see wheel-odometry drift.
 - `/free_joint_states`: ground-truth pose of every free body
-  (`mujoco_ros2_control_msgs/msg/FreeJointStateArray`), relative to the robot's `base_footprint` body, at 10 Hz. In `pick_scene.xml` that includes the
-  `block`; the robot's own free joint always reads identity.
+  (`mujoco_ros2_control_msgs/msg/FreeJointStateArray`), relative to the robot's `base_footprint`
+  body, at 10 Hz. In `pick_scene.xml` that includes the `block`; the robot's own free joint always
+  reads identity.
 - `/clock`: sim time. Every node runs with `use_sim_time`, so pausing MuJoCo pauses the controllers.
 
 ### Living room scene
