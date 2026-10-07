@@ -18,7 +18,7 @@ display = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_descri
 # newly generated MJCF files are installed.
 sim = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py \"$@\"' --", depends-on = ["build"] }
 # Unit tests (and linters) for the packages under src/.
-test = { cmd = "colcon test --packages-select emma_manipulation emma_behaviors && colcon test-result --verbose", depends-on = ["build"] }
+test = { cmd = "colcon test --packages-select emma_manipulation emma_perception emma_behaviors && colcon test-result --verbose", depends-on = ["build"] }
 # Scripted pick and place of a block in the sim (MuJoCo viewer + RViz). Args pass through.
 pick-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_behaviors pick_and_place.launch.py \"$@\"' --", depends-on = ["build"] }
 # Headless pick and place; exits 0 only if the behaviour tree succeeds within 240 s.
@@ -54,6 +54,7 @@ ros-lyrical-py-trees-ros = ">=2.6.0,<3"
 ros-lyrical-py-trees-ros-interfaces = ">=2.1.2,<3"
 ros-lyrical-mujoco-ros2-control-plugins = ">=0.1.2,<0.2"
 ros-lyrical-mujoco-ros2-control-msgs = ">=0.1.2,<0.2"
+ros-lyrical-cv-bridge = ">=4.1.0,<5"
 
 [pypi-dependencies]
 obj2mjcf = ">=0.0.25, <0.0.26"
