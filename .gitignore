@@ -7,3 +7,7 @@ build/
 install/
 log/
 src/emma_simulation/mujoco/molmospaces/
+
+# python
+__pycache__/
+*.pyc

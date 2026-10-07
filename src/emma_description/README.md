@@ -51,8 +51,9 @@ With `ros2_control:=mujoco` the block exposes:
 
 TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_flange → gripper_base →
 {gripper_left, gripper_right, tcp}`. `tcp` is the tool centre point, fixed 45 mm along
-`gripper_base` z, between the fingertips (which end at 48.5 mm); `emma_manipulation` plans for it. A mass-only `base_inertia` link and the four
-`{front,rear}_{left,right}_wheel` links also hang off `base_footprint`.
+`gripper_base` z, between the fingertips (which end at 48.5 mm); `emma_manipulation` plans
+for it. A mass-only `base_inertia` link and the four `{front,rear}_{left,right}_wheel` links
+also hang off `base_footprint`.
 
 | Joint | Type | Range |
 |---|---|---|
