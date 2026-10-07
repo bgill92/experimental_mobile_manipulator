@@ -17,7 +17,6 @@ from emma_manipulation.constants import (
 from emma_manipulation.grasp import grasp_candidates, offset
 from emma_manipulation.planner import ArmPlanner, to_joint_trajectory
 from geometry_msgs.msg import PoseStamped
-from mujoco_ros2_control_msgs.msg import FreeJointStateArray
 import numpy as np
 import py_trees
 from py_trees.common import Access, Status
@@ -28,7 +27,7 @@ from sensor_msgs.msg import JointState
 ARM_ACTION = '/arm_controller/follow_joint_trajectory'
 GRIPPER_ACTION = '/gripper_action_controller/gripper_cmd'
 GRIPPER_JOINT = 'gripper_controller'
-FREE_JOINTS_TOPIC = '/free_joint_states'
+BLOCK_POSE_TOPIC = '/block_pose'
 BLOCK = 'block'
 
 # Blackboard keys.
@@ -40,7 +39,6 @@ GRASPS = 'grasp_candidates'
 PREGRASPS = 'pregrasp_candidates'
 PLACES = 'place_candidates'
 PREPLACES = 'preplace_candidates'
-FREE_JOINTS = 'free_joints'
 
 
 def pose_to_tform(pose: PoseStamped) -> np.ndarray:
@@ -175,21 +173,6 @@ class PlanToTcp(_PlanBehaviour):
         return self.write(None if found is None else found[0])
 
 
-class SetBlockPose(py_trees.behaviour.Behaviour):
-    """Write a fixed block pose to the blackboard (stand-in for perception)."""
-
-    def __init__(self, name: str, xyz: Sequence[float], yaw: float = 0.0,
-                 frame: str = 'base_link') -> None:
-        super().__init__(name)
-        self.pose = make_pose(xyz, yaw, frame)
-        self.bb = self.attach_blackboard_client(name=name)
-        self.bb.register_key(BLOCK_POSE, access=Access.WRITE)
-
-    def update(self) -> Status:
-        self.bb.set(BLOCK_POSE, self.pose)
-        return Status.SUCCESS
-
-
 class ComputeGraspPoses(_PlannerBehaviour):
     """
     Turn `block_pose` into grasp, pregrasp, place and preplace candidates.
@@ -225,7 +208,8 @@ class ComputeGraspPoses(_PlannerBehaviour):
         self.bb.set(GRASP_INDEX, None)
         self.planner.add_box(BLOCK, [BLOCK_SIZE] * 3, block, (0.9, 0.1, 0.1, 1.0))
         xyz = ' '.join(f'{v:.3f}' for v in block[:3, 3])
-        self.log(f'{len(grasps)} grasp candidates for the block at [{xyz}]')
+        self.log(f'{len(grasps)} grasp candidates for the block at [{xyz}], '
+                 f'yaw {math.degrees(yaw_of(pose)):.0f} deg')
         return Status.SUCCESS
 
 
@@ -247,31 +231,20 @@ class DetachBlock(_PlannerBehaviour):
 
 
 class CheckPlaced(_LoggingBehaviour):
-    """
-    Check the block's ground-truth position (from `free_joints`) against `place_xyz`.
-
-    The pose comes from MuJoCo's FreeJointStatePublisherPlugin, relative to the robot's
-    base body. Perception replaces it in M3.
-    """
+    """Check the block's perceived position (`block_pose`) against `place_xyz`."""
 
     def __init__(self, name: str, place_xyz: Sequence[float] = PLACE_XYZ,
                  tol: float = 0.02) -> None:
         super().__init__(name)
         self.place_xyz = np.asarray(place_xyz, dtype=float)
         self.tol = tol
-        self.bb.register_key(FREE_JOINTS, access=Access.READ)
+        self.bb.register_key(BLOCK_POSE, access=Access.READ)
 
     def update(self) -> Status:
-        msg: FreeJointStateArray = self.bb.get(FREE_JOINTS)
-        for joint in msg.free_joints:
-            if joint.name == BLOCK:
-                p = joint.pose.pose.position
-                error = float(np.linalg.norm(np.array([p.x, p.y, p.z]) - self.place_xyz))
-                self.log(
-                    f'block at [{p.x:.3f} {p.y:.3f} {p.z:.3f}], {error * 1000:.1f} mm from target')
-                return Status.SUCCESS if error <= self.tol else Status.FAILURE
-        self.log(f'no "{BLOCK}" in {FREE_JOINTS_TOPIC}')
-        return Status.FAILURE
+        p = self.bb.get(BLOCK_POSE).pose.position
+        error = float(np.linalg.norm(np.array([p.x, p.y, p.z]) - self.place_xyz))
+        self.log(f'block at [{p.x:.3f} {p.y:.3f} {p.z:.3f}], {error * 1000:.1f} mm from target')
+        return Status.SUCCESS if error <= self.tol else Status.FAILURE
 
 
 # Stock behaviours.
@@ -308,10 +281,15 @@ def joints_to_blackboard() -> py_trees.behaviour.Behaviour:
         clearing_policy=py_trees.common.ClearingPolicy.NEVER)
 
 
-def free_joints_to_blackboard() -> py_trees.behaviour.Behaviour:
-    """Wait for a fresh ground-truth sample of the sim's free bodies in `free_joints`."""
+def block_to_blackboard(name: str = 'block2bb') -> py_trees.behaviour.Behaviour:
+    """
+    Wait for a fresh detection on /block_pose and keep it in `block_pose`.
+
+    Cleared on every start, so it stays RUNNING until a message arrives after the behaviour
+    starts: one sample per visit, taken after the arm has settled at the look pose.
+    """
     return py_trees_ros.subscribers.ToBlackboard(
-        name='truth2bb', topic_name=FREE_JOINTS_TOPIC, topic_type=FreeJointStateArray,
+        name=name, topic_name=BLOCK_POSE_TOPIC, topic_type=PoseStamped,
         qos_profile=rclpy.qos.QoSProfile(depth=1),
-        blackboard_variables={FREE_JOINTS: None},
+        blackboard_variables={BLOCK_POSE: None},
         clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE)

@@ -8,7 +8,6 @@ from emma_behaviors.pick_and_place import create_tree
 from emma_manipulation.constants import (
     ARM_JOINTS, BLOCK_START, HOME_Q, PLACE_XYZ, PRE_OFFSET, TABLE_CENTER, TABLE_HALF_SIZE)
 from emma_manipulation.planner import ArmPlanner
-from mujoco_ros2_control_msgs.msg import FreeJointState, FreeJointStateArray
 import numpy as np
 import py_trees
 from py_trees.common import Status
@@ -31,7 +30,7 @@ def blackboard():
     py_trees.blackboard.Blackboard.enable_activity_stream()
     client = py_trees.blackboard.Client(name='test')
     for key in (bh.JOINT_STATE, bh.BLOCK_POSE, bh.TRAJECTORY, bh.GRASP_INDEX, bh.GRASPS,
-                bh.PREGRASPS, bh.PLACES, bh.PREPLACES, bh.FREE_JOINTS):
+                bh.PREGRASPS, bh.PLACES, bh.PREPLACES):
         client.register_key(key, access=py_trees.common.Access.WRITE)
     client.set(bh.JOINT_STATE, JointState(name=list(ARM_JOINTS), position=list(HOME_Q)))
     yield client
@@ -52,7 +51,7 @@ def test_pose_round_trip() -> None:
 
 
 def test_compute_grasp_poses(planner: ArmPlanner, blackboard) -> None:
-    assert tick(bh.SetBlockPose('pose', BLOCK_START)) == Status.SUCCESS
+    blackboard.set(bh.BLOCK_POSE, bh.make_pose(BLOCK_START, 0.0, 'base_link'))
     assert tick(bh.ComputeGraspPoses('grasps', planner)) == Status.SUCCESS
     grasps = blackboard.get(bh.GRASPS)
     places = blackboard.get(bh.PLACES)
@@ -67,7 +66,7 @@ def test_compute_grasp_poses(planner: ArmPlanner, blackboard) -> None:
 
 
 def test_plan_to_tcp_chooses_then_reuses_grasp(planner: ArmPlanner, blackboard) -> None:
-    tick(bh.SetBlockPose('pose', BLOCK_START))
+    blackboard.set(bh.BLOCK_POSE, bh.make_pose(BLOCK_START, 0.0, 'base_link'))
     tick(bh.ComputeGraspPoses('grasps', planner))
     linear_first = bh.PlanToTcp('linear first', planner, bh.GRASPS, linear=True)
     assert tick(linear_first) == Status.FAILURE
@@ -87,17 +86,10 @@ def test_plan_to_tcp_chooses_then_reuses_grasp(planner: ArmPlanner, blackboard) 
 
 
 def test_check_placed(blackboard) -> None:
-    def truth(xyz) -> FreeJointStateArray:
-        state = FreeJointState(name=bh.BLOCK)
-        p = state.pose.pose.position
-        p.x, p.y, p.z = (float(v) for v in xyz)
-        return FreeJointStateArray(free_joints=[state])
-
-    blackboard.set(bh.FREE_JOINTS, truth(np.add(PLACE_XYZ, [0.01, 0.0, 0.0])))
+    near = [PLACE_XYZ[0] + 0.01, PLACE_XYZ[1], PLACE_XYZ[2]]
+    blackboard.set(bh.BLOCK_POSE, bh.make_pose(near, 0.0, 'base_link'))
     assert tick(bh.CheckPlaced('check')) == Status.SUCCESS
-    blackboard.set(bh.FREE_JOINTS, truth(BLOCK_START))
-    assert tick(bh.CheckPlaced('check')) == Status.FAILURE
-    blackboard.set(bh.FREE_JOINTS, FreeJointStateArray())
+    blackboard.set(bh.BLOCK_POSE, bh.make_pose(BLOCK_START, 0.0, 'base_link'))
     assert tick(bh.CheckPlaced('check')) == Status.FAILURE
 
 
@@ -110,6 +102,6 @@ def test_detach_without_block_succeeds(planner: ArmPlanner, blackboard) -> None:
 def test_tree_builds(planner: ArmPlanner) -> None:
     root = create_tree(planner)
     names = [b.name for b in root.iterate()]
-    for expected in ('joints2bb', 'Retry', 'Recover', 'Close gripper', 'Check placed',
-                     'Execute home'):
+    for expected in ('joints2bb', 'Retry', 'Recover', 'Plan look', 'block2bb', 'Close gripper',
+                     'check block2bb', 'Check placed', 'Execute home'):
         assert expected in names

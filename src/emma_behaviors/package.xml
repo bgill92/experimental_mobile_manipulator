@@ -15,13 +15,14 @@
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>mujoco_ros2_control_msgs</depend>
 
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <!-- pick_and_place.launch.py starts the sim with its pick scene. -->
   <exec_depend>emma_simulation</exec_depend>
+  <!-- ...and the block detector the tree reads /block_pose from. -->
+  <exec_depend>emma_perception</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

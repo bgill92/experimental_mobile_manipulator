@@ -3,6 +3,7 @@ Scripted pick and place of the block in the sim, as a py_trees behaviour tree.
 
     ros2 launch emma_behaviors pick_and_place.launch.py
 
+Needs emma_perception's block_detector publishing /block_pose (the launch file starts it).
 Exits 0 when the tree succeeds (block placed near PLACE_XYZ, arm home), 1 otherwise.
 """
 
@@ -10,12 +11,10 @@ import sys
 import time
 
 from emma_behaviors.behaviours import (
-    AttachBlock, CheckPlaced, close_gripper, ComputeGraspPoses, DetachBlock, execute,
-    free_joints_to_blackboard, GRASPS, JOINT_STATE, joints_to_blackboard, open_gripper, PLACES,
-    PlanToJoints, PlanToTcp, PREGRASPS, PREPLACES, SetBlockPose,
-    translation)
-from emma_manipulation.constants import (
-    BLOCK_START, HOME_Q, TABLE_CENTER, TABLE_HALF_SIZE)
+    AttachBlock, block_to_blackboard, CheckPlaced, close_gripper, ComputeGraspPoses,
+    DetachBlock, execute, GRASPS, JOINT_STATE, joints_to_blackboard, open_gripper, PLACES,
+    PlanToJoints, PlanToTcp, PREGRASPS, PREPLACES, translation)
+from emma_manipulation.constants import HOME_Q, LOOK_Q, TABLE_CENTER, TABLE_HALF_SIZE
 from emma_manipulation.planner import ArmPlanner
 import py_trees
 from py_trees.common import Status
@@ -26,13 +25,29 @@ from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import String
 
 
+# Seconds the arm settles at the look pose before sampling /block_pose, and the longest wait
+# for a detection after that.
+SETTLE_TIME = 1.0
+DETECT_TIMEOUT = 10.0
+
+
 def create_tree(planner: ArmPlanner) -> py_trees.behaviour.Behaviour:
     """Build the pick-and-place tree; see the package README for a diagram."""
     def move(name: str, plan: py_trees.behaviour.Behaviour) -> list[py_trees.behaviour.Behaviour]:
         return [plan, execute(f'Execute {name}')]
 
+    def look(prefix: str) -> list[py_trees.behaviour.Behaviour]:
+        """Go to LOOK_Q, settle, and take one fresh /block_pose sample."""
+        return [
+            *move(f'{prefix}look', PlanToJoints(f'Plan {prefix}look', planner, LOOK_Q)),
+            py_trees.timers.Timer(f'{prefix.capitalize()}settle', duration=SETTLE_TIME),
+            py_trees.decorators.Timeout(
+                f'{prefix.capitalize()}detect', block_to_blackboard(f'{prefix}block2bb'),
+                duration=DETECT_TIMEOUT),
+        ]
+
     pick_place = py_trees.composites.Sequence(name='Pick and place', memory=True, children=[
-        SetBlockPose('Block pose', BLOCK_START),
+        *look(''),
         ComputeGraspPoses('Grasp poses', planner),
         open_gripper(),
         *move('pregrasp', PlanToTcp('Plan pregrasp', planner, PREGRASPS, linear=False)),
@@ -45,7 +60,7 @@ def create_tree(planner: ArmPlanner) -> py_trees.behaviour.Behaviour:
         open_gripper('Release'),
         DetachBlock('Detach block', planner),
         *move('retreat', PlanToTcp('Plan retreat', planner, PREPLACES, linear=True)),
-        free_joints_to_blackboard(),
+        *look('check '),
         CheckPlaced('Check placed'),
         *move('home', PlanToJoints('Plan home', planner, HOME_Q)),
     ])

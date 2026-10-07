@@ -18,15 +18,19 @@ pixi run build
 
 ## Packages
 
-- [`emma_description`](src/emma_description/README.md): URDF of the robot (myAGV, myCobot 280 M5
-  and parallel gripper), RViz display launch, and the changes made to the upstream models.
+- [`emma_description`](src/emma_description/README.md): URDF of the robot (myAGV, myCobot 280 M5,
+  parallel gripper and a wrist RGB-D camera), RViz display launch, and the changes made to the
+  upstream models.
 - [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
-  mujoco_ros2_control, with arm, gripper and mecanum base controllers.
+  mujoco_ros2_control, with arm, gripper and mecanum base controllers and the wrist camera's
+  colour and depth images.
 - [`emma_manipulation`](src/emma_manipulation/README.md): arm motion planning with
   [roboplan](https://github.com/open-planning/roboplan) (IK, RRT, straight-line moves) and a
   `move_arm` command-line tool.
+- [`emma_perception`](src/emma_perception/README.md): finds the red block in the wrist camera's
+  colour and depth images and publishes its pose on `/block_pose`.
 - [`emma_behaviors`](src/emma_behaviors/README.md): [py_trees](https://github.com/splintered-reality/py_trees)
-  behaviour tree for a scripted pick and place of a block in the sim.
+  behaviour tree for a pick and place of the block in the sim, using the detected pose.
 
 ## View the robot
 
@@ -58,8 +62,8 @@ pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_a
 ## Pick and place in sim
 
 ```bash
-pixi run pick-demo    # table + block scene, the behaviour tree picks the block and places it 8 cm over
-pixi run pick-check   # the same headless; exits 0 only if the block ended up at the target
+pixi run pick-demo    # table + block scene: look, detect, pick, place 8 cm over, look again, home
+pixi run pick-check   # the same headless; exits 0 only if the camera sees the block at the target
 ```
 
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
