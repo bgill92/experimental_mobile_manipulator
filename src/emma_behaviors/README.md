@@ -34,11 +34,12 @@ pixi run pick-check                            # headless; exit 0 only if the tr
 
 `ros2 launch` does not pass a node's exit code through, so `pick-check` starts this launch with
 `tree:=false` in the background (log in `log/pick_check_sim.log`), runs `pick_and_place` in the
-foreground under a timeout, and exits with the tree's result. `pick_and_place` exits 0 when the tree succeeds and 1
-when it fails. When it finishes it prints the final tree with each behaviour's status.
+foreground under a timeout, and exits with the tree's result. `pick_and_place` exits 0 when
+the tree succeeds and 1 when it fails. When it finishes it prints the final tree with each
+behaviour's status.
 
-A run takes about 20 s of sim time (about 30 s with startup). To watch the tree live, run `pixi run py-trees-tree-watcher` in another
-terminal. The graphical `py-trees-tree-viewer` (`py_trees_ros_viewer`) is not installed here.
+A run takes about 20 s of sim time (about 30 s with startup). To watch the tree live, run
+`pixi run py-trees-tree-watcher` in another terminal. The graphical `py-trees-tree-viewer` (`py_trees_ros_viewer`) is not installed here.
 
 ## Tree
 
@@ -113,6 +114,8 @@ block lands upright whichever tilt the pregrasp move picked.
   sequence once more, starting with a fresh look, so a block the first attempt dropped or
   pushed is picked from where it now lies (if it is still in view and reachable);
   `ComputeGraspPoses` moves the block in the planning scene to the new pose.
+  The retry does not open the gripper first, though: after a failure mid-carry it looks with
+  the block still in the fingers, and the open before the pregrasp drops it from there.
 - After two failed attempts, `Recover` opens the gripper, detaches the block in the planning
   scene, plans home, and then returns FAILURE, so the node exits 1.
 - There are no per-move timeouts; `pick-check`'s 240 s limit bounds the whole run.
@@ -120,9 +123,10 @@ block lands upright whichever tilt the pregrasp move picked.
 ## Assumptions and caveats
 
 - **Perceived block pose**: the block can sit anywhere the camera sees it from `LOOK_Q` and
-  the arm can reach. In the sim, blocks at (0.28, 0.03) turned 25° and at (0.26, -0.03) turned
-  -20° were picked and placed. Closer to the robot than about x = 0.23 m the straight-line grasp move finds no
-  solution (with or without the camera), so the pick fails there.
+  the arm can reach. In the sim, blocks at (0.28, 0.03) turned 25°, (0.27, -0.025) turned 15°,
+  (0.26, -0.03) turned -20° and (0.24, 0.02) turned -30° were picked and placed. Closer to the
+  robot than about x = 0.23 m the straight-line grasp move finds no solution (with or without
+  the camera), so the pick fails there.
 - **One sample per look**: the tree takes the first detection after a 1 s settle and does not
   average. In the sim the detection is within about 1 mm of the ground truth at `LOOK_Q`.
 - **The base is parked**: the block pose is in `base_link` and the planner assumes the base

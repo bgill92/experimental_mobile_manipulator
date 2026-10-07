@@ -172,6 +172,10 @@ class ArmPlanner:
         full[self._arm_idx] = q
         return full
 
+    def clamp(self, q: ArrayLike) -> np.ndarray:
+        """Clamp `q` into the joint limits."""
+        return np.asarray(self.scene.clampToValidConfiguration(self.full_q(q)))[self._arm_idx]
+
     def has_collisions(self, q: ArrayLike) -> bool:
         return bool(self.scene.hasCollisions(self.full_q(q)))
 
@@ -195,10 +199,16 @@ class ArmPlanner:
 
     def plan_joint(self, q_start: ArrayLike, q_goal: ArrayLike
                    ) -> list[np.ndarray] | None:
-        """Collision-free joint path from `q_start` to `q_goal` (RRT-Connect, shortcut)."""
+        """
+        Collision-free joint path from `q_start` to `q_goal` (RRT-Connect, shortcut).
+
+        `q_start` is clamped into the joint limits first: a measured joint state can sit a
+        hair past a limit (joint 6 reads 3.1416 against a 3.14159 limit after a move to
+        it), and RRT rejects such a start outright.
+        """
         if self.has_collisions(q_goal):
             return None
-        start = JointConfiguration(ARM_JOINTS, np.asarray(q_start, dtype=float))
+        start = JointConfiguration(ARM_JOINTS, self.clamp(q_start))
         goal = JointConfiguration(ARM_JOINTS, np.asarray(q_goal, dtype=float))
         try:
             path = self._rrt.plan(start, goal)
@@ -234,7 +244,7 @@ class ArmPlanner:
         Over a few centimetres the TCP stays close to a line. Fails if IK lands on another
         branch (any joint moves more than `max_joint_jump` rad) or any step collides.
         """
-        q0 = np.asarray(q_start, dtype=float)
+        q0 = self.clamp(q_start)
         q_goal = self.ik(tform, q0, local=True)
         if q_goal is None or np.max(np.abs(q_goal - q0)) > max_joint_jump:
             return None

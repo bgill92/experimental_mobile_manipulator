@@ -75,11 +75,16 @@ block axis most across the line from the arm. Each tilt comes twice, with the fi
 `to_joint_trajectory` times each segment by its largest joint step over `v_max` (at least
 0.1 s), positions only; `arm_controller` interpolates between them.
 
+`plan_joint` and `plan_linear` clamp the start configuration into the joint limits (`clamp(q)`).
+A measured joint state can sit a hair past a limit (joint 6 reads 3.1416 against its 3.14159
+limit after a move to it), and roboplan's RRT rejects such a start outright.
+
 ## Frames
 
 - Planning is in `base_link`; the planning group `arm` is the chain `g_base → tcp`.
 - `tcp` is a fixed link 45 mm along `gripper_base` z, between the fingertips (`emma_description`).
 - `CAMERA_FRAME` is the wrist camera's `wrist_camera_color_optical_frame`.
+- The base, wheels and fingers stay at their default positions (fingers open) in collision checks.
 
 ## Arm poses
 
@@ -92,9 +97,8 @@ block axis most across the line from the arm. Each tilt comes twice, with the fi
 hardcoded; `test_look_pose` re-solves it, prints the solution, and checks that the hardcoded
 value is collision free, reachable from `HOME_Q` and has the block on the optical axis. The plan
 called for a 45° view, but from 0.2 m that puts the camera almost over the arm base, and IK
-found no solution at 45° or 55° from 0.17–0.23 m. 60–70° all work; 65° is in the middle. The camera is on the
-gripper's side, so joint 1 turns 0.86 rad to bring it over the block.
-- The base, wheels and fingers stay at their default positions (fingers open) in collision checks.
+found no solution at 45° or 55° from 0.17–0.23 m. 60–70° all work; 65° is in the middle. The
+camera is on the gripper's side, so joint 1 turns 0.86 rad to bring it over the block.
 
 ## Collision model
 
@@ -112,8 +116,8 @@ roboplan builds its collision model from the URDF, with three planning-side chan
 
 Disabled pairs: all parent-child links (`allowAdjacentLinkCollisions`), and
 `gripper_left`/`gripper_right`/`wrist_camera_link` against `joint6`/`joint6_flange`
-(pairs naming a link the URDF lacks, such as the camera with `camera:=none`, are skipped). No SRDF; upstream's
-`firefighter.srdf` names the wrong robot and has no gripper. Sampling 300 random arm
+(pairs naming a link the URDF lacks, such as the camera with `camera:=none`, are skipped).
+No SRDF; upstream's `firefighter.srdf` names the wrong robot and has no gripper. Sampling 300 random arm
 configurations found no other always-colliding pairs, and `HOME_Q` is collision free without
 further exceptions.
 

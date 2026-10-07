@@ -144,3 +144,14 @@ def test_look_pose(planner: ArmPlanner) -> None:
         assert margin < u < 640 - margin and margin < v < 400 - margin, (point, u, v)
     x, y, _ = world_to_cam[:3, :3] @ np.asarray(BLOCK_START) + world_to_cam[:3, 3]
     assert math.hypot(x, y) < 0.01  # Block on the optical axis.
+
+
+def test_plans_from_just_past_a_joint_limit(planner: ArmPlanner) -> None:
+    # A measured joint state can overshoot a limit slightly; planning must still start.
+    q = HOME.copy()
+    q[5] = math.pi + 1e-4  # The joint 6 limit is 3.14159.
+    assert not planner.has_collisions(q)
+    np.testing.assert_allclose(planner.clamp(q)[5], 3.14159)
+    path = planner.plan_joint(q, HOME)
+    assert path is not None
+    np.testing.assert_allclose(path[-1], HOME, atol=1e-9)

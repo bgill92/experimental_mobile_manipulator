@@ -56,8 +56,9 @@ TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_
 `tcp` is the tool centre point, fixed 45 mm along `gripper_base` z, between the fingertips
 (which end at 48.5 mm); `emma_manipulation` plans for it. `wrist_camera_link` follows REP 103
 (x forward) and `wrist_camera_color_optical_frame` is the usual optical frame (z forward,
-x right, y down in the image); both sit at the camera's front face. A mass-only `base_inertia` link and the four `{front,rear}_{left,right}_wheel` links
-also hang off `base_footprint`.
+x right, y down in the image); both sit at the camera's front face. A mass-only
+`base_inertia` link and the four `{front,rear}_{left,right}_wheel` links also hang off
+`base_footprint`.
 
 | Joint | Type | Range |
 |---|---|---|
