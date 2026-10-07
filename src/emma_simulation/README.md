@@ -15,7 +15,9 @@ standing on four mecanum wheels modelled with passive rollers.
 | `launch/sim.launch.py` | Starts MuJoCo + controller manager, `robot_state_publisher`, controller spawner, and RViz. The arm starts folded back over the base (`initial_value`s in `emma.urdf.xacro`). |
 | `config/controllers.yaml` | Controller manager and controller parameters. |
 | `config/wheel_pids.yaml` | Velocity PID gains the MuJoCo plugin uses to drive the wheel motors. |
+| `config/mujoco_plugins.yaml` | mujoco_ros2_control plugins: `FreeJointStatePublisherPlugin` publishes ground-truth poses of free bodies on `/free_joint_states`. |
 | `mujoco/scene.xml` | Top-level MJCF: floor, lights, visual settings; includes the robot model. |
+| `mujoco/pick_scene.xml` | `scene.xml` plus a table and a graspable 10 mm block, for the pick-and-place demo in `emma_behaviors`. |
 | `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults. |
 | `mujoco/mujoco_description_formatted.xml` | **Generated** robot MJCF. Do not hand-edit; regenerate. |
 | `mujoco/assets/` | **Generated** OBJ meshes and textures (~33 MB). |
@@ -37,7 +39,7 @@ pixi run sim headless:=true rviz:=false    # no windows
 |---|---|---|
 | `headless` | `false` | Run MuJoCo without its viewer. |
 | `rviz` | `true` | Start RViz with `rviz/sim.rviz` (robot model + odometry trail). |
-| `mujoco_model` | `share/emma_simulation/mujoco/scene.xml` | MJCF scene to load. |
+| `mujoco_model` | `share/emma_simulation/mujoco/scene.xml` | MJCF scene to load. `pick_scene.xml` adds the table and block. |
 
 `pixi run sim` builds the workspace first, so freshly generated MJCF files get installed.
 
@@ -51,6 +53,9 @@ pixi run sim headless:=true rviz:=false    # no windows
 | `mecanum_drive_controller` | `mecanum_drive_controller/MecanumDriveController` | Topic `/mecanum_drive_controller/reference` (`geometry_msgs/msg/TwistStamped`); velocity commands on the four wheels. Publishes `/mecanum_drive_controller/odometry` and the `odom → base_footprint` TF. Stops 0.5 s after the last reference. |
 
 The gripper controller isn't called `gripper_controller` because that is the gripper joint's name.
+Its `goal_tolerance` is 1 mm (the 10 mm default is wider than the 7 mm stroke, so every goal would
+succeed at once), and `allow_stalling` is on, so fingers stopped by a grasped object report
+success after 0.5 s instead of aborting.
 
 ### Example goals
 
@@ -72,6 +77,9 @@ ros2 topic pub -r 10 /mecanum_drive_controller/reference geometry_msgs/msg/Twist
 Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
   Compare it with `/mecanum_drive_controller/odometry` to see wheel-odometry drift.
+- `/free_joint_states`: ground-truth pose of every free body (`mujoco_ros2_control_msgs/msg/FreeJointStateArray`),
+  relative to the robot's `base_footprint` body, at 10 Hz. In `pick_scene.xml` that includes the
+  `block`; the robot's own free joint always reads identity.
 - `/clock`: sim time. Every node runs with `use_sim_time`, so pausing MuJoCo pauses the controllers.
 
 ### Living room scene
@@ -100,6 +108,7 @@ It also remaps emma's collision bits to fit the room's:
 | Rollers | `conaffinity` 1 → 9 | The room's floor and walls have `contype` 8. |
 | Arm collision meshes | `contype` 0 → 2 | The arm hits walls, furniture and loose objects. |
 | Chassis collision meshes | `contype` 0 → 4; the floor drops bit 4 | The chassis hits furniture, but its hull reaches the ground and would drag on the floor. |
+| Finger collision meshes | unchanged (`contype` 4, `conaffinity` 2) | They already collide; the room's objects accept every bit, so the fingers touch them too. |
 
 To keep the room fast, loose bodies of at least `--freeze-kg` (default 4 kg) lose their free joint
 and become part of the static world. In `FloorPlan201` that is the 16 pieces of furniture: sofa,
@@ -138,7 +147,8 @@ Rerun after changing anything in `emma_description/urdf/` or `mujoco/mujoco_inpu
    - restores the base `<inertial>` the converter drops, copied from the URDF it compiled;
    - rescales the gripper (mm) and myAGV (inch) meshes, because the converter ignores COLLADA
      units and RViz does not;
-   - adds 12 roller spheres to each wheel body (see *Mecanum wheels* below).
+   - adds 12 roller spheres to each wheel body (see *Mecanum wheels* below);
+   - gives the finger collision meshes contact bits and a grippy contact (see *Contacts*).
 4. **Copy back**: only `mujoco_description_formatted.xml` and the asset files it references go
    into `mujoco/`. The rest are converter intermediates and are discarded.
 
@@ -160,8 +170,22 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
 - **Mimic finger**: the URDF `<mimic>` is dropped by the converter. An `<equality><joint>` with
   `polycoef="0 -1 0 0 0"` replaces it. ros2_control treats the joint as passive and only reads its
   state.
-- **Contacts**: every robot geom except the rollers has `contype=0 conaffinity=0`. The rollers
-  have `conaffinity=1`, so the only contacts are the rollers against the floor. The arm does not collide with anything, itself included.
+- **Contacts**: every robot geom except the rollers and the fingers has `contype=0
+  conaffinity=0`. The rollers have `conaffinity=1`, so they touch the floor. The arm does not
+  collide with anything, itself included. The finger collision meshes (`gripper_left`,
+  `gripper_right`) get `contype=4 conaffinity=2` from `postprocess_mjcf.py`, with `condim=4`,
+  friction `1.5 0.02 0.0005` and a stiff `solref`/`solimp`, so they can pinch a block. Bits:
+
+  | Bit | Meaning | Geoms (`contype` / `conaffinity`) |
+  |---|---|---|
+  | 1 | floor and structure | floor `1/0`, rollers `0/1`, `pick_scene.xml` table `1/6` |
+  | 2 | graspable objects | `pick_scene.xml` block `2/5` |
+  | 4 | fingers | fingers `4/2` |
+
+  Two geoms touch when either one's `contype` shares a bit with the other's `conaffinity`. So the
+  fingers touch the block and the table but not each other, the arm or the floor; the block rests
+  on the table and the floor. In `scene.xml` there is nothing for the fingers to touch, so the
+  bare sim behaves as before.
 - **Mecanum wheels**: ported from
   [JunHeonYoon/mujoco_mecanum](https://github.com/JunHeonYoon/mujoco_mecanum) (MIT). Each wheel
   carries 12 passive spheres on hinges, so contact friction behaves like rollers. The port
@@ -180,6 +204,13 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
   the robot once the base drives.
 
 ## Assumptions and caveats
+
+- **Grasping is tuned for the 10 mm demo block**: the fingers open to 15 mm and close to 1 mm
+  (inner faces, from the meshes). MuJoCo collides the convex hull of each finger mesh. The block
+  is 5 g. Closed on it, the gripper actuator stops 4.5 mm short of its -7 mm target, so at kp 100
+  it squeezes with about 0.45 N, which holds 0.05 N of weight with margin at friction 1.5
+  (`noslip_iterations="3"` in `pick_scene.xml` also stops it creeping). Raise the gripper kp in
+  `mujoco_inputs.xml` if a heavier object slips. The real gripper's opening is unverified.
 
 - **Dynamics are approximate**: masses and inertias are estimates (see `emma_description`'s
   README), and the actuator gains were picked to hold pose and track goals, not to match the real
