@@ -48,7 +48,10 @@ def fmt(values) -> str:
 def add_rollers(wheel: ET.Element, tilt: int) -> None:
     roller_r = WHEEL_RADIUS * ROLLER_RATIO
     for i in range(N_ROLLERS):
-        angle = 2 * math.pi * i / N_ROLLERS
+        # Offset half a roller pitch so that at wheel angle 0 two rollers straddle the contact
+        # point. With a roller straight down the base starts balanced on it and rolls about
+        # 1 cm (half a pitch) in the first seconds of the sim.
+        angle = 2 * math.pi * (i + 0.5) / N_ROLLERS
         c, s = math.cos(angle), math.sin(angle)
         body = ET.SubElement(wheel, "body", {
             "name": f"{wheel.get('name')}_roller_{i}",
