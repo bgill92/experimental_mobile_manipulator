@@ -39,7 +39,8 @@ the tree succeeds and 1 when it fails. When it finishes it prints the final tree
 behaviour's status.
 
 A run takes about 20 s of sim time (about 30 s with startup). To watch the tree live, run
-`pixi run py-trees-tree-watcher` in another terminal. The graphical `py-trees-tree-viewer` (`py_trees_ros_viewer`) is not installed here.
+`pixi run py-trees-tree-watcher` in another terminal. The graphical `py-trees-tree-viewer`
+(`py_trees_ros_viewer`) is not installed here.
 
 ## Tree
 

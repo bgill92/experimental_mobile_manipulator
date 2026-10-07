@@ -59,11 +59,14 @@ trajectory = to_joint_trajectory(path)               # trajectory_msgs/JointTraj
 
 | Call | Returns |
 |---|---|
+| `ArmPlanner(urdf_xml, base_frame='base_link', tip_frame='tcp', max_planning_time=2.0, seed=None)` | Planner for the chain `g_base → tip_frame`. `seed` makes IK, RRT and shortcutting repeatable. Not thread-safe. |
+| `set_q(joint_state)` | The `ARM_JOINTS` positions of a `JointState`, in order; raises `ValueError` if one is missing. |
+| `clamp(q)` | `q` clamped into the joint limits. |
 | `fk(q, frame=tcp)` | 4×4 pose of `frame` in `base_link`. |
 | `ik(tform, q_seed, local=False)` | Collision-free IK solution or `None`. `local` disables random restarts. |
 | `plan_joint(q_start, q_goal)` | Shortcut RRT-Connect path (list of 6-vectors, including the start) or `None`. |
 | `plan_to_any(q_start, tforms)` | `(path, index)` for the first pose in `tforms` that IK and RRT reach, or `None`. |
-| `plan_linear(q_start, tform, steps=10)` | Joint-interpolated path to `tform`, or `None` if IK jumps to another branch or a step collides. |
+| `plan_linear(q_start, tform, steps=10, max_joint_jump=1.0)` | Joint-interpolated path to `tform`, or `None` if IK jumps to another branch (a joint moves more than `max_joint_jump` rad) or a step collides. |
 | `add_box` / `has_box` / `remove` / `attach(name, q)` / `detach(name, q)` | Scene objects. Boxes never collide with each other. |
 | `has_collisions(q)` | Collision check of the whole robot plus scene objects. |
 
@@ -72,8 +75,9 @@ tilted by each of `GRASP_TILTS` away from the arm base, and the fingers (x) clos
 block axis most across the line from the arm. Each tilt comes twice, with the fingers swapped.
 `offset(tform, d)` backs a pose off by `d` along its approach axis.
 
-`to_joint_trajectory` times each segment by its largest joint step over `v_max` (at least
-0.1 s), positions only; `arm_controller` interpolates between them.
+`to_joint_trajectory(path, v_max=0.8, min_segment_time=0.1)` drops the start waypoint and times
+each segment by its largest joint step over `v_max` (at least `min_segment_time`), positions
+only; `arm_controller` interpolates between them.
 
 `plan_joint` and `plan_linear` clamp the start configuration into the joint limits (`clamp(q)`).
 A measured joint state can sit a hair past a limit (joint 6 reads 3.1416 against its 3.14159
@@ -117,9 +121,9 @@ roboplan builds its collision model from the URDF, with three planning-side chan
 Disabled pairs: all parent-child links (`allowAdjacentLinkCollisions`), and
 `gripper_left`/`gripper_right`/`wrist_camera_link` against `joint6`/`joint6_flange`
 (pairs naming a link the URDF lacks, such as the camera with `camera:=none`, are skipped).
-No SRDF; upstream's `firefighter.srdf` names the wrong robot and has no gripper. Sampling 300 random arm
-configurations found no other always-colliding pairs, and `HOME_Q` is collision free without
-further exceptions.
+No SRDF; upstream's `firefighter.srdf` names the wrong robot and has no gripper. Sampling 300
+random arm configurations found no other always-colliding pairs, and `HOME_Q` is collision free
+without further exceptions.
 
 Attached objects hang off `joint6_flange`, not `tcp`: roboplan places added geometry relative
 to the parent *joint* of the given frame, so a box parented to `tcp` lands 79 mm off.
