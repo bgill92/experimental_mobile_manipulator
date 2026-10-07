@@ -22,6 +22,9 @@ pixi run build
   and parallel gripper), RViz display launch, and the changes made to the upstream models.
 - [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
   mujoco_ros2_control, with arm, gripper and mecanum base controllers.
+- [`emma_manipulation`](src/emma_manipulation/README.md): arm motion planning with
+  [roboplan](https://github.com/open-planning/roboplan) (IK, RRT, straight-line moves) and a
+  `move_arm` command-line tool.
 
 ## View the robot
 
@@ -43,7 +46,20 @@ pixi run molmospaces-scene   # downloads the room once, writes the combined scen
 pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
 ```
 
+With the sim running, move the arm by planning to a TCP pose or back home:
+
+```bash
+pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_arm --pose 0.25 0 0.20 0 3.1416 0"
+pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_arm --home"
+```
+
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
+
+## Test
+
+```bash
+pixi run test   # unit tests and linters
+```
 
 ## License
 

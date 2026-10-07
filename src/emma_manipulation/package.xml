@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>emma_manipulation</name>
+  <version>0.0.0</version>
+  <description>Arm motion planning for emma with roboplan: IK, RRT and straight-line moves, grasp poses, and a move_arm command-line tool.</description>
+  <maintainer email="5256190+bgill92@users.noreply.github.com">Bilal Gill</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>builtin_interfaces</depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>roboplan</exec_depend>
+  <!-- Mesh packages the robot_description references; the planner loads their meshes. -->
+  <exec_depend>emma_description</exec_depend>
+  <exec_depend>mycobot_description</exec_depend>
+  <exec_depend>myagv_description</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_mypy</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>ament_xmllint</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>xacro</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
