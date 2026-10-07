@@ -557,7 +557,12 @@ environments:
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-joint-trajectory-controller-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mecanum-drive-controller-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-0.1.2-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-msgs-0.1.2-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-plugins-0.1.2-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-parallel-gripper-controller-6.9.0-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-2.6.0-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-ros-2.6.0-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-ros-interfaces-2.1.2-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-roboplan-0.7.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-ros2controlcli-6.10.1-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-xacro-2.1.1-hb0f4dca_25.conda
@@ -718,6 +723,9 @@ environments:
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-pluginlib-5.8.5-np2py314hc703c99_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-point-cloud-transport-5.4.3-np2py314hc703c99_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-proxsuite-0.7.3-np2py314h0394828_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-2.6.0-np2py314h53a0733_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-ros-2.6.0-np2py314h53a0733_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-ros-interfaces-2.1.2-np2py314h53a0733_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-python-qt-binding-2.5.5-np2py314h1b8acf9_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-qt-dotgraph-2.11.1-np2py314h53a0733_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-qt-gui-2.11.1-np2py314h53a0733_27.conda
@@ -9782,6 +9790,22 @@ packages:
   run_exports: {}
   size: 2072
   timestamp: 1790954140950
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-msgs-0.1.2-hb0f4dca_27.conda
+  sha256: edfda9b2f1c1319067f635bcbd0f0c3d02262558241ea10bb8865c802937e4ed
+  md5: 5d833f9584063a3ac1e6f50b0b9f61e0
+  depends:
+  - ros2-mujoco-ros2-control-msgs ==0.1.2
+  run_exports: {}
+  size: 2095
+  timestamp: 1790902753139
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-plugins-0.1.2-hb0f4dca_27.conda
+  sha256: 2f51f1cecbc78d19014ecc8bddcc7973521c3507426676227571a85cb0bc94cd
+  md5: 1cbdc62665b8b153d5d48363eda3abd7
+  depends:
+  - ros2-mujoco-ros2-control-plugins ==0.1.2
+  run_exports: {}
+  size: 2120
+  timestamp: 1790949213846
 - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-parallel-gripper-controller-6.9.0-hb0f4dca_27.conda
   sha256: f2dd383d092fa078de6f2e1d5b22e62d252f59c8a822259cacec8e1fe38d580f
   md5: 55258b3d3ed86d0836e8c15c8399bba3
@@ -9790,6 +9814,30 @@ packages:
   run_exports: {}
   size: 2112
   timestamp: 1790954271273
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-2.6.0-hb0f4dca_27.conda
+  sha256: 8ff77b9e6e4144ab99576b6023217fe394bfeb2753807971871c187f5cb3e25d
+  md5: 81c56ba12fcc59ced27ed3763b8df0b8
+  depends:
+  - ros2-py-trees ==2.6.0
+  run_exports: {}
+  size: 2021
+  timestamp: 1790777480126
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-ros-2.6.0-hb0f4dca_27.conda
+  sha256: b079eba1930c0244c8ab6eb9964b1ec43fca626a98aea34b3d2fe83307226f61
+  md5: f623e16b5920950a1cd7e2a57be011d6
+  depends:
+  - ros2-py-trees-ros ==2.6.0
+  run_exports: {}
+  size: 2050
+  timestamp: 1790949212221
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-py-trees-ros-interfaces-2.1.2-hb0f4dca_27.conda
+  sha256: 4fe9ace85023b84ab9047ba4787c474c2a279d3e29ff38f45336a9a77f2663cf
+  md5: 2c38a43d701efcb4a7386af95adef3d2
+  depends:
+  - ros2-py-trees-ros-interfaces ==2.1.2
+  run_exports: {}
+  size: 2087
+  timestamp: 1790948324142
 - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-roboplan-0.7.0-hb0f4dca_27.conda
   sha256: 180d8d744dad92f66d386ba383ae76fac0ea77445d14ae50defe02f9b167aac4
   md5: 492bb371cb1198573a33d396a312611a
@@ -13217,6 +13265,74 @@ packages:
   run_exports: {}
   size: 18541
   timestamp: 1790777255729
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-2.6.0-np2py314h53a0733_27.conda
+  sha256: 4aba3bfa3acad6a853a03446af228b22b38c689cebae2da60a3c6bdf2cc689c6
+  md5: a32ab15c74f2ca25d40b0d12375a4c66
+  depends:
+  - pydot
+  - python
+  - ros2-distro-mutex 0.21.* lyrical_*
+  - ros2-ros-workspace
+  - libgcc >=15
+  - __glibc >=2.28,<3.0.a0
+  - libstdcxx >=15
+  - ros2-distro-mutex >=0.21.0,<0.22.0a0
+  - numpy >=1.25,<3
+  - python_abi 3.14.* *_cp314
+  license: BSD-3-Clause
+  run_exports: {}
+  size: 280828
+  timestamp: 1790777097592
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-ros-2.6.0-np2py314h53a0733_27.conda
+  sha256: 09109592d1c9575cba4fbb24b518fd488ac009157cef3f2628591931f39651a7
+  md5: cb147a6fc14942240f6634c79b5d09d2
+  depends:
+  - python
+  - ros2-distro-mutex 0.21.* lyrical_*
+  - ros2-geometry-msgs
+  - ros2-py-trees
+  - ros2-py-trees-ros-interfaces
+  - ros2-rcl-interfaces
+  - ros2-rclpy
+  - ros2-ros-workspace
+  - ros2-ros2topic
+  - ros2-sensor-msgs
+  - ros2-std-msgs
+  - ros2-std-srvs
+  - ros2-tf2-ros-py
+  - ros2-unique-identifier-msgs
+  - libstdcxx >=15
+  - libgcc >=15
+  - __glibc >=2.28,<3.0.a0
+  - ros2-distro-mutex >=0.21.0,<0.22.0a0
+  - numpy >=1.25,<3
+  - python_abi 3.14.* *_cp314
+  license: BSD-3-Clause
+  run_exports: {}
+  size: 161391
+  timestamp: 1790948556459
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-py-trees-ros-interfaces-2.1.2-np2py314h53a0733_27.conda
+  sha256: 91fce4ec30b3ce96ef0ddc97ba9395aaceb4803b162299cfa07b93b23aab3928
+  md5: c2e11db3fe1b17038fab66fdbe81801d
+  depends:
+  - python
+  - ros2-action-msgs
+  - ros2-diagnostic-msgs
+  - ros2-distro-mutex 0.21.* lyrical_*
+  - ros2-geometry-msgs
+  - ros2-ros-workspace
+  - ros2-rosidl-default-runtime
+  - ros2-unique-identifier-msgs
+  - libgcc >=15
+  - __glibc >=2.28,<3.0.a0
+  - libstdcxx >=15
+  - numpy >=1.25,<3
+  - ros2-distro-mutex >=0.21.0,<0.22.0a0
+  - python_abi 3.14.* *_cp314
+  license: BSD-3-Clause
+  run_exports: {}
+  size: 966244
+  timestamp: 1790902755810
 - conda: https://prefix.dev/robostack-lyrical/linux-64/ros2-python-qt-binding-2.5.5-np2py314h1b8acf9_27.conda
   sha256: 6505edd76919fd13978f376a9f13c86fa687f4afc227b24e2c29c9299399f6c6
   md5: 1c2f76a23b151b516b876b83e10eebab

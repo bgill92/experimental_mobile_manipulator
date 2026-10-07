@@ -4,7 +4,7 @@ Arm motion planning for **emma** with [roboplan](https://github.com/open-plannin
 used as an in-process Python library: collision-aware IK, RRT-Connect with path shortcutting,
 short straight-line moves, and top-down grasp poses for a small block. `planner.py` and
 `grasp.py` have no ROS node in them; `move_arm` is the thin ROS layer that runs a plan on the
-simulated (or real) `arm_controller`.
+simulated (or real) `arm_controller`. The `emma_behaviors` pick-and-place tree uses the same API.
 
 ## Contents
 
@@ -64,7 +64,7 @@ trajectory = to_joint_trajectory(path)               # trajectory_msgs/JointTraj
 | `plan_joint(q_start, q_goal)` | Shortcut RRT-Connect path (list of 6-vectors, including the start) or `None`. |
 | `plan_to_any(q_start, tforms)` | `(path, index)` for the first pose in `tforms` that IK and RRT reach, or `None`. |
 | `plan_linear(q_start, tform, steps=10)` | Joint-interpolated path to `tform`, or `None` if IK jumps to another branch or a step collides. |
-| `add_box` / `remove` / `attach(name, q)` / `detach(name, q)` | Scene objects. Boxes never collide with each other. |
+| `add_box` / `has_box` / `remove` / `attach(name, q)` / `detach(name, q)` | Scene objects. Boxes never collide with each other. |
 | `has_collisions(q)` | Collision check of the whole robot plus scene objects. |
 
 `grasp_candidates` returns TCP poses at the block centre with z (the approach) pointing down,

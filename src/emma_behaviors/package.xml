@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>emma_behaviors</name>
+  <version>0.0.0</version>
+  <description>py_trees behaviour tree that sequences emma's arm and gripper into a pick and place of a block in the sim.</description>
+  <maintainer email="5256190+bgill92@users.noreply.github.com">Bilal Gill</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>py_trees</depend>
+  <depend>py_trees_ros</depend>
+  <depend>emma_manipulation</depend>
+  <depend>control_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>mujoco_ros2_control_msgs</depend>
+
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- pick_and_place.launch.py starts the sim with its pick scene. -->
+  <exec_depend>emma_simulation</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_mypy</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>ament_xmllint</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>xacro</test_depend>
+  <test_depend>emma_description</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

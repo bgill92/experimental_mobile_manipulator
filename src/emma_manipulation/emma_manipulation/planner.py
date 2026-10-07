@@ -251,6 +251,9 @@ class ArmPlanner:
                    self.base_frame, np.asarray(tform_in_base, dtype=float))
         self._add(name, box)
 
+    def has_box(self, name: str) -> bool:
+        return name in self._boxes
+
     def remove(self, name: str) -> None:
         self.scene.removeGeometry(name)
         del self._boxes[name]

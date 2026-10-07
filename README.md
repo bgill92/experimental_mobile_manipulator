@@ -25,6 +25,8 @@ pixi run build
 - [`emma_manipulation`](src/emma_manipulation/README.md): arm motion planning with
   [roboplan](https://github.com/open-planning/roboplan) (IK, RRT, straight-line moves) and a
   `move_arm` command-line tool.
+- [`emma_behaviors`](src/emma_behaviors/README.md): [py_trees](https://github.com/splintered-reality/py_trees)
+  behaviour tree for a scripted pick and place of a block in the sim.
 
 ## View the robot
 
@@ -51,6 +53,13 @@ With the sim running, move the arm by planning to a TCP pose or back home:
 ```bash
 pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_arm --pose 0.25 0 0.20 0 3.1416 0"
 pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_arm --home"
+```
+
+## Pick and place in sim
+
+```bash
+pixi run pick-demo    # table + block scene, the behaviour tree picks the block and places it 8 cm over
+pixi run pick-check   # the same headless; exits 0 only if the block ended up at the target
 ```
 
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
