@@ -6,7 +6,8 @@ the controller manager as a ros2_control hardware plugin, so the controllers are
 real robot would use.
 
 **Scope:** the arm, gripper, and mecanum base are controlled. The base is a free body
-standing on four mecanum wheels modelled with passive rollers.
+standing on four mecanum wheels modelled with passive rollers. The wrist camera publishes colour
+and depth images.
 
 ## Contents
 
@@ -16,9 +17,10 @@ standing on four mecanum wheels modelled with passive rollers.
 | `config/controllers.yaml` | Controller manager and controller parameters. |
 | `config/wheel_pids.yaml` | Velocity PID gains the MuJoCo plugin uses to drive the wheel motors. |
 | `config/mujoco_plugins.yaml` | mujoco_ros2_control plugins: `FreeJointStatePublisherPlugin` publishes ground-truth poses of free bodies on `/free_joint_states`. |
+| `config/camera.yaml` | `CameraPlugin` settings for the wrist camera: frame, topics, 5 Hz. |
 | `mujoco/scene.xml` | Top-level MJCF: floor, lights, visual settings; includes the robot model. |
 | `mujoco/pick_scene.xml` | `scene.xml` plus a table and a graspable 10 mm block, for the pick-and-place demo in `emma_behaviors`. |
-| `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults. |
+| `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults, the wrist camera. |
 | `mujoco/mujoco_description_formatted.xml` | **Generated** robot MJCF. Do not hand-edit; regenerate. |
 | `mujoco/assets/` | **Generated** OBJ meshes and textures (~33 MB). |
 | `rviz/sim.rviz` | RViz config rooted at `odom` with an Odometry display, so the base is seen moving. |
@@ -73,6 +75,25 @@ ros2 action send_goal /gripper_action_controller/gripper_cmd \
 ros2 topic pub -r 10 /mecanum_drive_controller/reference geometry_msgs/msg/TwistStamped \
   "{twist: {linear: {x: 0.1, y: 0.0}, angular: {z: 0.0}}}"   # m/s and rad/s
 ```
+
+### Wrist camera
+
+`CameraPlugin` (from `mujoco_ros2_control_plugins`, configured in `config/camera.yaml`) renders
+the MJCF camera `wrist_camera` and publishes:
+
+| Topic | Type | Notes |
+|---|---|---|
+| `/wrist_camera/color/image_raw` | `sensor_msgs/Image` | `rgb8`, 640 × 400 |
+| `/wrist_camera/depth/image_raw` | `sensor_msgs/Image` | `32FC1`, metres along the optical axis |
+| `/wrist_camera/color/camera_info` | `sensor_msgs/CameraInfo` | fx = fy ≈ 313.9, cx 320, cy 200, no distortion |
+
+All three are stamped in sim time, in `wrist_camera_color_optical_frame`, at 5 Hz. One camera
+stands in for the real sensor's aligned colour and depth, so the depth image is already
+registered to the colour one. The topic names follow the Orbbec ROS 2 driver's layout so a real
+Gemini 305 can replace the sim camera later. Rendering uses GLFW when a display is available and
+falls back to EGL (headless OpenGL) when it is not, so `headless:=true` without a display still
+gets images. With the arm folded at the start pose the camera sees the sky and the fingertips;
+`emma_manipulation`'s `LOOK_Q` points it at the table.
 
 Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
@@ -137,6 +158,8 @@ pixi run gen-mjcf
 ```
 
 Rerun after changing anything in `emma_description/urdf/` or `mujoco/mujoco_inputs.xml`.
+The converter adds the wrist camera at the `wrist_camera_color_optical_frame` site and fails if
+the URDF has no such link, so generate with the default `camera:=gemini305`.
 `scene.xml` is included at load time, so editing it needs no regeneration. The steps:
 
 1. **xacro**: expands `emma.urdf.xacro` with defaults (`ros2_control:=none`).
@@ -147,7 +170,8 @@ Rerun after changing anything in `emma_description/urdf/` or `mujoco/mujoco_inpu
    - restores the base `<inertial>` the converter drops, copied from the URDF it compiled;
    - rescales the gripper (mm) and myAGV (inch) meshes, because the converter ignores COLLADA
      units and RViz does not;
-   - adds 12 roller spheres to each wheel body (see *Mecanum wheels* below);
+   - adds 12 roller spheres to each wheel body, offset by half a roller pitch (see *Mecanum
+     wheels* below);
    - gives the finger collision meshes contact bits and a grippy contact (see *Contacts*).
 4. **Copy back**: only `mujoco_description_formatted.xml` and the asset files it references go
    into `mujoco/`. The rest are converter intermediates and are discarded.
@@ -195,7 +219,13 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
     small, and the base then strafes at a quarter of the commanded speed.
 
   Opposite corners share a tilt, forming the X layout that `mecanum_drive_controller` assumes.
-  `check_mecanum.py` catches a flipped tilt.
+  `check_mecanum.py` catches a flipped tilt. The rollers sit half a pitch (15°) off the wheel's
+  zero angle, so the robot starts resting on two rollers per wheel. With one roller straight
+  down, the base starts balanced on it and rolls about 1 cm backwards in the first seconds.
+- **Wrist camera**: `mujoco_inputs.xml` adds a `<camera>` (fovy 65°, 640 × 400) at the
+  `wrist_camera_color_optical_frame` site; the converter turns the REP 103 optical frame into
+  MuJoCo's camera convention. The camera body is a box with `contype=0`, like the rest of the
+  arm.
 - **Free base**: the plugin publishes the free joint's pose on
   `/simulator/floating_base_state`. `mecanum_drive_controller` publishes the `odom →
   base_footprint` TF from wheel odometry.
@@ -243,5 +273,8 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
 - **Room scenes use the room's floor**: the ceiling, walls and floor come from the room, and the
   floor sits at z = 0. The composed XML holds absolute paths, so regenerate it after moving the
   checkout.
+- **Camera rendering costs CPU/GPU**: the plugin renders 5 colour and depth frames a second
+  even when nothing reads them. Lower `camera_publish_rate` in `config/camera.yaml` if the sim
+  runs slow.
 - **Passive-joint warning**: `Unable to find the actuator 'gripper_base_to_gripper_right'` is
   expected, because that joint is the passive mimic finger.

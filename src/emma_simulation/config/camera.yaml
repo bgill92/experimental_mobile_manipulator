@@ -1,0 +1,16 @@
+# Wrist RGB-D camera, published by mujoco_ros2_control's CameraPlugin (sim.launch.py passes this
+# file to ros2_control_node). The plugin wraps every camera in the MJCF; the wrist_camera block
+# names the frame and topics for the one emma has. Topic names follow the Orbbec ROS 2 driver's
+# layout, so a real Gemini 305 can stand in later. Depth is 32FC1 in metres. Without a display
+# the plugin renders through EGL.
+/**:
+  ros__parameters:
+    mujoco_plugins:
+      camera:
+        type: mujoco_ros2_control_plugins/CameraPlugin
+        camera_publish_rate: 5.0
+        wrist_camera:
+          frame_name: wrist_camera_color_optical_frame
+          info_topic: /wrist_camera/color/camera_info
+          image_topic: /wrist_camera/color/image_raw
+          depth_topic: /wrist_camera/depth/image_raw
