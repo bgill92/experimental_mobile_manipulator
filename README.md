@@ -29,8 +29,9 @@ pixi run build
   `move_arm` command-line tool.
 - [`emma_perception`](src/emma_perception/README.md): finds the red block in the wrist camera's
   colour and depth images and publishes its pose on `/block_pose`.
-- [`emma_behaviors`](src/emma_behaviors/README.md): [py_trees](https://github.com/splintered-reality/py_trees)
-  behaviour tree for a pick and place of the block in the sim, using the detected pose.
+- [`emma_behaviors`](src/emma_behaviors/README.md):
+  [py_trees](https://github.com/splintered-reality/py_trees) behaviour tree for a pick and place
+  of the block in the sim, using the detected pose.
 
 ## View the robot
 
@@ -61,18 +62,20 @@ pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_a
 
 ## Pick and place in sim
 
-```bash
-pixi run pick-demo    # table + block scene: look, detect, pick, place 8 cm over, look again, home
-pixi run pick-check   # the same headless; exits 0 only if the camera sees the block at the target
-```
-
-Launch arguments, example action goals, assumptions and caveats are in each package's README.
-
-## Test
+The `pick_scene.xml` scene puts a table and a 10 mm red block in front of emma. The
+`emma_behaviors` tree points the wrist camera at the table, takes the block's pose from
+`emma_perception`'s detector, picks the block up with `emma_manipulation`'s planner, puts it
+down 8 cm to the side, looks again to check where it landed, and folds the arm home.
 
 ```bash
-pixi run test   # unit tests and mypy
+pixi run pick-demo    # MuJoCo viewer + RViz; add headless:=true rviz:=false to run without windows
+pixi run pick-check   # the same, headless; exits 0 only if the camera sees the block at the target
+pixi run test         # unit tests (planner, grasp poses, detector, behaviours) and linters, no sim
 ```
+
+`pick-check` is the end-to-end check: it fails if the tree fails or takes longer than 240 s, and
+a run takes about 30 s. Launch arguments, the tree, example action goals, assumptions and caveats
+are in each package's README.
 
 ## License
 
