@@ -50,7 +50,8 @@ With `ros2_control:=mujoco` the block exposes:
 ## Robot structure
 
 TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_flange → gripper_base →
-{gripper_left, gripper_right}`. A mass-only `base_inertia` link and the four
+{gripper_left, gripper_right, tcp}`. `tcp` is the tool centre point, fixed 45 mm along
+`gripper_base` z, between the fingertips (which end at 48.5 mm); `emma_manipulation` plans for it. A mass-only `base_inertia` link and the four
 `{front,rear}_{left,right}_wheel` links also hang off `base_footprint`.
 
 | Joint | Type | Range |
@@ -63,6 +64,7 @@ TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_
 | `joint6output_to_joint6` | revolute | ±3.14159 rad |
 | `gripper_controller` | prismatic | -0.007 (closed) to 0 (open) m |
 | `gripper_base_to_gripper_right` | prismatic, mimic of `gripper_controller` (×-1) | 0 to 0.007 m |
+| `gripper_base_to_tcp` | fixed, `xyz="0 0 0.045"` | — |
 | `{front,rear}_{left,right}_wheel_joint` | continuous, axis +y | — |
 
 The arm joint names are upstream's and read backwards: `joint2_to_joint1` rotates link
@@ -83,6 +85,7 @@ flange mount from `mycobot_280_jn_parallel_gripper.urdf`, 34 mm along the flange
   rotation, so both are dropped and `gripper_base` is the mesh frame.
 - The right-finger joint is `gripper_base_to_gripper_right` (upstream: `gripper_base_to_gripper_left`).
 - Inertials added, and the velocity limit is 0.05 m/s instead of 0.
+- A massless `tcp` link is added between the fingertips.
 - Upstream's `mycobot_280m5_with_gripper_parallel.urdf` is the *adaptive* gripper despite its
   name. It is not used here.
 
