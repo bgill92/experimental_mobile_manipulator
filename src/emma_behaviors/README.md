@@ -71,7 +71,8 @@ Sequence                                          [Cell -> Cell], fails only wit
 ├─ wait for joints                                until a joint state with all arm joints
 └─ Fallback
    ├─ retry (2 attempts)
-   │  └─ pick and place (Sequence)                [Cell -> Cell]
+   │  └─ pick and place                            recover<all four errors> that logs the error and fails with it
+   │     Sequence                                 [Cell -> Cell]
    │     plan look → execute look                 RRT to kLookQ (offloaded)    [Cell -> Planned<Cell> -> Cell]
    │     settle                                   5 ticks
    │     detect                                   timeout 50 ticks: a fresh /block_pose   [-> Looked]
@@ -119,7 +120,7 @@ joint state in `Io` has a mutex because offloaded plans read it.
 | `world/robot` | The planning URDF (with the mesh scale fixes), animated per tick from `/joint_states` (`world/robot/joints/<joint>`). The right finger stays closed in the viewer because the planning URDF drops its mimic joint. |
 | `base_link/table`, `base_link/block` | Table and block boxes; the block where it was detected and where it was released. |
 | `base_link/plan/<motion>` | TCP path of each executed motion (`look`, `pregrasp`, `grasp`, `lift`, ...). |
-| `log` | Plan and action results, chosen grasp, placement error, recovery. |
+| `log` | Plan and action results, chosen grasp, placement error, each failed attempt's error, recovery. |
 | `tree` | Tree status graph (`rerun_tree.hpp`). |
 
 The planning URDF is logged rather than `/robot_description` because Rerun 0.38's COLLADA importer
