@@ -25,8 +25,8 @@ class Scene;
 
 namespace emma_behaviors {
 
-/// @brief Scene and event logging to one Rerun recording. Every method is thread-safe (Rerun
-/// recording streams are).
+/// @brief Scene and event logging to one Rerun recording. Every method except logUrdf is
+/// thread-safe (Rerun recording streams are).
 class Viz {
  public:
   enum class Level { kInfo, kWarning, kError };
@@ -48,6 +48,8 @@ class Viz {
   ///
   /// The URDF is written to a temporary `.urdf` file (the extension selects Rerun's loader), and
   /// `ROS_PACKAGE_PATH` is set to `package_paths` so its `package://` meshes resolve.
+  /// @warning Not thread-safe: it calls setenv and writes a fixed temporary path. Call it at
+  /// startup, before any other thread logs.
   void logUrdf(const std::string& xml,
                const std::vector<std::filesystem::path>& package_paths) const;
 
