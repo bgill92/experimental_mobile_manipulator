@@ -49,6 +49,14 @@ template <class S>
       beet::named<"plan home">(beet::offload(&planHome<Cell>)),
       beet::named<"execute home">(&execute<Cell>));
 
+  // retry and fallback swallow pick_place's errors, so log each attempt's here. The handler
+  // returns the error unchanged; beet has no pass-through error hook.
+  auto logged = beet::recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout>(
+      std::move(pick_place), [cell]<class E>(E error) -> Result<Cell, E> {
+        logEvent(cell, "attempt failed: " + describe(error), Viz::Level::kWarning);
+        return beet::make_unexpected(std::move(error));
+      });
+
   // Handles its own ActionFailed / NoPlan, so the only error left is the deliberate GaveUp.
   auto recover = beet::sequence(
       beet::recover<ActionFailed, NoPlan>(
@@ -67,7 +75,7 @@ template <class S>
   return beet::sequence(
       beet::named<"wait for joints">(&waitForJoints),
       beet::fallback(
-          beet::named<"retry">(beet::retry(2, beet::named<"pick and place">(pick_place))),
+          beet::named<"retry">(beet::retry(2, beet::named<"pick and place">(logged))),
           beet::named<"recover">(recover)));
 }
 
