@@ -24,6 +24,9 @@ pixi run build
   mujoco_ros2_control, with arm, gripper and mecanum base controllers.
 - [`emma_perception`](src/emma_perception/README.md): finds the pick-and-place block in the wrist
   camera's colour and depth images and publishes its pose on `/block_pose`.
+- [`emma_manipulation`](src/emma_manipulation/README.md): C++ arm planning library on roboplan
+  (collision-aware IK, RRT and straight-line moves, grasp poses, trajectory timing) and the
+  `move_arm` command-line tool that runs one planned motion in the sim.
 
 ## View the robot
 
@@ -50,7 +53,7 @@ Launch arguments, example action goals, assumptions and caveats are in each pack
 ## Test
 
 ```bash
-pixi run test   # unit tests and mypy
+pixi run test   # gtest (emma_manipulation), pytest and mypy (emma_perception)
 ```
 
 ## License

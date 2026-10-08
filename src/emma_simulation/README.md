@@ -19,7 +19,7 @@ and depth images.
 | `config/mujoco_plugins.yaml` | mujoco_ros2_control plugins: `FreeJointStatePublisherPlugin` publishes ground-truth poses of free bodies on `/free_joint_states`. |
 | `config/camera.yaml` | `CameraPlugin` settings for the wrist camera: frame, topics, 5 Hz. |
 | `mujoco/scene.xml` | Top-level MJCF: floor, lights, visual settings; includes the robot model. |
-| `mujoco/pick_scene.xml` | `scene.xml` plus a table and a graspable 10 mm block, for the pick-and-place demo in `emma_behaviors`. |
+| `mujoco/pick_scene.xml` | `scene.xml` plus a table and a graspable 10 mm block, for the pick-and-place demo. |
 | `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults, the wrist camera. |
 | `mujoco/mujoco_description_formatted.xml` | **Generated** robot MJCF. Do not hand-edit; regenerate. |
 | `mujoco/assets/` | **Generated** OBJ meshes and textures (~33 MB). |
@@ -93,7 +93,7 @@ registered to the colour one. The topic names follow the Orbbec ROS 2 driver's l
 Gemini 305 can replace the sim camera later. Rendering uses GLFW when a display is available and
 falls back to EGL (headless OpenGL) when it is not, so `headless:=true` without a display still
 gets images. With the arm folded at the start pose the camera sees the sky and the fingertips;
-`emma_manipulation`'s `LOOK_Q` points it at the table.
+`emma_manipulation`'s `kLookQ` points it at the table.
 
 Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
