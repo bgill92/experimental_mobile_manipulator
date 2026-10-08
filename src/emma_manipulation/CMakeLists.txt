@@ -8,11 +8,15 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(control_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(roboplan_core REQUIRED)
 find_package(roboplan_rrt REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(roboplan_simple_ik REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
@@ -40,6 +44,15 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   ${trajectory_msgs_TARGETS}
 )
 
+add_executable(move_arm src/move_arm.cpp)
+target_link_libraries(move_arm
+  ${PROJECT_NAME}
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+  ${control_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+)
+
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
@@ -47,6 +60,8 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+# lib/<package> so `ros2 run emma_manipulation move_arm` finds it.
+install(TARGETS move_arm DESTINATION lib/${PROJECT_NAME})
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
