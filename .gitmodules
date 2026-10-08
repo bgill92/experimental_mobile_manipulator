@@ -8,3 +8,7 @@
 	url = https://github.com/elephantrobotics/mycobot_ros2.git
 	branch = humble
 	shallow = true
+[submodule "external_packages/beet"]
+	path = external_packages/beet
+	url = https://github.com/EzraBrooks/beet
+	shallow = true
