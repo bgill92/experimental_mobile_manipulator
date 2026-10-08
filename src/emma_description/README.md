@@ -1,7 +1,8 @@
 # emma_description
 
 URDF description of **emma**: an Elephant Robotics myAGV (2023, Raspberry Pi) base with a
-myCobot 280 M5 arm and the parallel gripper (light) mounted on top.
+myCobot 280 M5 arm and the parallel gripper (light) mounted on top, plus a wrist RGB-D camera
+standing in for an Orbbec Gemini 305.
 
 ## Contents
 
@@ -9,7 +10,7 @@ myCobot 280 M5 arm and the parallel gripper (light) mounted on top.
 |---|---|
 | `urdf/emma.urdf.xacro` | Top-level description. Assembles base, arm and gripper, and optionally adds the `<ros2_control>` block. This is the single source of truth for both RViz and simulation. |
 | `urdf/mycobot_280_m5.urdf.xacro` | myCobot 280 M5 arm, copied from `mycobot_ros2` and modified (see below). |
-| `urdf/parallel_gripper.urdf.xacro` | Parallel gripper, rewritten from the ROS 1 `mycobot_ros` repo (see below). |
+| `urdf/parallel_gripper.urdf.xacro` | Parallel gripper, rewritten from the ROS 1 `mycobot_ros` repo (see below), and the wrist camera. |
 | `meshes/parallel_gripper/` | Gripper meshes (COLLADA, millimetres), BSD 3-Clause, see `LICENSE` there. |
 | `launch/display.launch.py` | Shows the robot in RViz with joint sliders. |
 | `rviz/emma.rviz` | RViz config: robot model, fixed frame `base_footprint`. |
@@ -27,6 +28,7 @@ pixi run display
 |---|---|---|---|
 | `model` | `both`, `base`, `arm` | `both` | Whole robot, only the myAGV, or only the arm. |
 | `gripper` | `parallel`, `none` | `parallel` | End effector on the arm flange. Ignored without the arm. |
+| `camera` | `gemini305`, `none` | `gemini305` | Wrist camera on the gripper. Ignored without the gripper. |
 | `gui` | `true`, `false` | `true` | `joint_state_publisher_gui` sliders; otherwise all joints sit at zero. |
 
 ## xacro arguments
@@ -35,7 +37,7 @@ pixi run display
 
 | Argument | Default | Notes |
 |---|---|---|
-| `model`, `gripper` | `both`, `parallel` | As above. |
+| `model`, `gripper`, `camera` | `both`, `parallel`, `gemini305` | As above. `emma_simulation`'s MJCF needs the camera (see its README). |
 | `mount_x`, `mount_y`, `mount_z`, `mount_yaw` | `0.0981`, `-0.0044`, `0.1322`, `0.0` | Arm base (`g_base`) pose relative to the AGV `base_link`. |
 | `ros2_control` | `none` | `mujoco` adds a `<ros2_control>` block using `mujoco_ros2_control/MujocoSystemInterface`. Only applies to `model:=both`. |
 | `mujoco_model` | `""` | MJCF scene path passed to the MuJoCo hardware plugin. |
@@ -50,8 +52,13 @@ With `ros2_control:=mujoco` the block exposes:
 ## Robot structure
 
 TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_flange → gripper_base →
-{gripper_left, gripper_right}`. A mass-only `base_inertia` link and the four
-`{front,rear}_{left,right}_wheel` links also hang off `base_footprint`.
+{gripper_left, gripper_right, tcp, wrist_camera_link → wrist_camera_color_optical_frame}`.
+`tcp` is the tool centre point, fixed 45 mm along `gripper_base` z, between the fingertips
+(which end at 48.5 mm); `emma_manipulation` plans for it. `wrist_camera_link` follows REP 103
+(x forward) and `wrist_camera_color_optical_frame` is the usual optical frame (z forward,
+x right, y down in the image); both sit at the camera's front face. A mass-only
+`base_inertia` link and the four `{front,rear}_{left,right}_wheel` links also hang off
+`base_footprint`.
 
 | Joint | Type | Range |
 |---|---|---|
@@ -63,6 +70,9 @@ TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_
 | `joint6output_to_joint6` | revolute | ±3.14159 rad |
 | `gripper_controller` | prismatic | -0.007 (closed) to 0 (open) m |
 | `gripper_base_to_gripper_right` | prismatic, mimic of `gripper_controller` (×-1) | 0 to 0.007 m |
+| `gripper_base_to_tcp` | fixed, `xyz="0 0 0.045"` | — |
+| `gripper_base_to_wrist_camera` | fixed, `xyz="0 0.037 0" rpy="0 -1.309 -1.5708"` | — |
+| `wrist_camera_link_to_color_optical_frame` | fixed, `rpy="-1.5708 0 -1.5708"` | — |
 | `{front,rear}_{left,right}_wheel_joint` | continuous, axis +y | — |
 
 The arm joint names are upstream's and read backwards: `joint2_to_joint1` rotates link
@@ -83,6 +93,8 @@ flange mount from `mycobot_280_jn_parallel_gripper.urdf`, 34 mm along the flange
   rotation, so both are dropped and `gripper_base` is the mesh frame.
 - The right-finger joint is `gripper_base_to_gripper_right` (upstream: `gripper_base_to_gripper_left`).
 - Inertials added, and the velocity limit is 0.05 m/s instead of 0.
+- A massless `tcp` link is added between the fingertips.
+- A wrist camera (`camera:=gemini305`) is added on the gripper's +y side; see the caveats.
 - Upstream's `mycobot_280m5_with_gripper_parallel.urdf` is the *adaptive* gripper despite its
   name. It is not used here.
 
@@ -104,6 +116,16 @@ submodule is not edited. `emma.urdf.xacro` adds what it lacks: the mass through 
 - **Gripper travel**: the 7 mm per finger (15 mm open, 1 mm closed between fingertips) is
   upstream's value and has not been checked on the real gripper.
 - **Gripper velocity limit**: 0.05 m/s is a placeholder.
+- **Wrist camera**: a 23 × 42 × 42 mm, 68 g box for an Orbbec Gemini 305. The mount is a design
+  choice, not a real bracket: the body sits just past the +y edge of the `gripper_base` mesh,
+  looking along the fingers and tilted 15° toward them, so the fingertips show at the bottom of
+  the image about 5 cm away (the Gemini 305 sees from 4 cm). The box is drawn behind its frame
+  origin so that the optical frame, and the sim camera on it, sit at the front face. One camera
+  stands in for the aligned colour and depth streams; `emma_simulation` gives it a 65° vertical
+  field of view at 640 × 400 (about 91° horizontally, between the 94° colour and 88° depth specs).
+- **Start pose**: the arm starts folded with joint 4 at 0.3 rad (`HOME_Q` in
+  `emma_manipulation`). With the camera on, the earlier -0.495 rad puts the camera inside the
+  upper arm.
 - **Effort limits**: all joints use upstream's 1000, the wheels included. That is unrealistic
   but harmless; the simulated wheel motors clamp torque on their own.
 - **Wheel velocity limit**: 30 rad/s is a placeholder.

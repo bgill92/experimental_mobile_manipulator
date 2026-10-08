@@ -513,6 +513,8 @@ environments:
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-joint-trajectory-controller-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mecanum-drive-controller-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-0.1.2-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-msgs-0.1.2-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-plugins-0.1.2-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-parallel-gripper-controller-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-ros2controlcli-6.10.1-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-xacro-2.1.1-hb0f4dca_25.conda
@@ -8872,6 +8874,22 @@ packages:
   run_exports: {}
   size: 2072
   timestamp: 1790954140950
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-msgs-0.1.2-hb0f4dca_27.conda
+  sha256: edfda9b2f1c1319067f635bcbd0f0c3d02262558241ea10bb8865c802937e4ed
+  md5: 5d833f9584063a3ac1e6f50b0b9f61e0
+  depends:
+  - ros2-mujoco-ros2-control-msgs ==0.1.2
+  run_exports: {}
+  size: 2095
+  timestamp: 1790902753139
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-mujoco-ros2-control-plugins-0.1.2-hb0f4dca_27.conda
+  sha256: 2f51f1cecbc78d19014ecc8bddcc7973521c3507426676227571a85cb0bc94cd
+  md5: 1cbdc62665b8b153d5d48363eda3abd7
+  depends:
+  - ros2-mujoco-ros2-control-plugins ==0.1.2
+  run_exports: {}
+  size: 2120
+  timestamp: 1790949213846
 - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-parallel-gripper-controller-6.9.0-hb0f4dca_27.conda
   sha256: f2dd383d092fa078de6f2e1d5b22e62d252f59c8a822259cacec8e1fe38d580f
   md5: 55258b3d3ed86d0836e8c15c8399bba3

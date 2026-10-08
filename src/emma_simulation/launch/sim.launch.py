@@ -34,6 +34,8 @@ def generate_launch_description():
     description_share = FindPackageShare('emma_description')
     controllers_file = PathJoinSubstitution([share, 'config', 'controllers.yaml'])
     pids_file = PathJoinSubstitution([share, 'config', 'wheel_pids.yaml'])
+    plugins_file = PathJoinSubstitution([share, 'config', 'mujoco_plugins.yaml'])
+    camera_file = PathJoinSubstitution([share, 'config', 'camera.yaml'])
 
     robot_description = ParameterValue(
         Command([
@@ -68,7 +70,8 @@ def generate_launch_description():
             executable='ros2_control_node',
             emulate_tty=True,
             output='both',
-            parameters=[{'use_sim_time': True}, ParameterFile(controllers_file)],
+            parameters=[{'use_sim_time': True}, ParameterFile(controllers_file),
+                        ParameterFile(plugins_file), ParameterFile(camera_file)],
             on_exit=Shutdown(),
         ),
         # One spawner activates the controllers in order; separate spawners race.
