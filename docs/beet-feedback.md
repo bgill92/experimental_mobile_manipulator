@@ -124,3 +124,17 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
 - **Suggestion:** a way to snapshot inputs on the tick thread before the job starts (e.g.
   `offload(prepare, job)`, where `prepare` runs in the tick and `job` gets its result), so jobs
   only see values they own.
+
+## 11. Unlabelled nodes in traces show only their kind
+
+- **Tried:** printing the final tree from `beet::tree_info<Tree>` and `StatusTable` at the end of
+  `pick_and_place` (the replacement for py_trees' `unicode_tree` in the `pick-check` log).
+- **Happened:** `named<"x">` labels the node it wraps, so in `named<"detect">(timeout_ticks(50,
+  &waitBlockPose<S>))` the timeout is "detect" and the leaf under it prints as `leaf`. Unnamed
+  composites print as `sequence` / `fallback`, and `recover<...>` prints as `recover`, which in our
+  tree sits directly under a sequence we named "recover". `node_info` also has no depth, so every
+  consumer recomputes it from `parent`.
+- **Workaround:** fall back to `kind` when `label` is empty and compute depth from `parent` (IDs
+  are depth-first, so one forward pass); the leaf's name is still lost.
+- **Suggestion:** default a leaf's label to its function's name when it is a function pointer, and
+  add `depth` to `node_info`.
