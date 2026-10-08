@@ -25,7 +25,8 @@ pixi run build
 - [`emma_perception`](src/emma_perception/README.md): finds the pick-and-place block in the wrist
   camera's colour and depth images and publishes its pose on `/block_pose`.
 - [`emma_manipulation`](src/emma_manipulation/README.md): C++ arm planning library on roboplan
-  (collision-aware IK, RRT and straight-line moves, grasp poses, trajectory timing).
+  (collision-aware IK, RRT and straight-line moves, grasp poses, trajectory timing) and the
+  `move_arm` command-line tool that runs one planned motion in the sim.
 
 ## View the robot
 
