@@ -66,6 +66,9 @@ class PlannerTest : public testing::Test {
 
   static void TearDownTestSuite() { planner_.reset(); }
 
+  // A failed ASSERT in SetUpTestSuite only leaves it early; fail each test instead of crashing.
+  void SetUp() override { ASSERT_NE(planner_, nullptr) << "planner fixture not built"; }
+
   static std::unique_ptr<ArmPlanner> planner_;
   static std::vector<Eigen::Matrix4d> grasps_;
 };
