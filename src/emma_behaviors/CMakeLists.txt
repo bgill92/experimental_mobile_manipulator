@@ -55,6 +55,11 @@ target_link_libraries(${PROJECT_NAME}_core
     rerun_sdk
 )
 
+add_executable(pick_and_place src/pick_and_place.cpp)
+target_link_libraries(pick_and_place ${PROJECT_NAME}_core rerun_sdk)
+install(TARGETS pick_and_place DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch scripts DESTINATION share/${PROJECT_NAME} USE_SOURCE_PERMISSIONS)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
