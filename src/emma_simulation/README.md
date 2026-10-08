@@ -93,7 +93,7 @@ registered to the colour one. The topic names follow the Orbbec ROS 2 driver's l
 Gemini 305 can replace the sim camera later. Rendering uses GLFW when a display is available and
 falls back to EGL (headless OpenGL) when it is not, so `headless:=true` without a display still
 gets images. With the arm folded at the start pose the camera sees the sky and the fingertips;
-`emma_manipulation`'s `LOOK_Q` points it at the table.
+`emma_manipulation`'s `kLookQ` points it at the table.
 
 Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
