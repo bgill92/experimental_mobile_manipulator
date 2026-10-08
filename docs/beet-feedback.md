@@ -138,3 +138,15 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   are depth-first, so one forward pass); the leaf's name is still lost.
 - **Suggestion:** default a leaf's label to its function's name when it is a function pointer, and
   add `depth` to `node_info`.
+
+## 12. No hook to observe an error that a later node swallows
+
+- **Tried:** logging why each pick-and-place attempt failed (`beet::Timeout` from `detect`,
+  `NotPlaced` from `check placed`) when `retry(2, ...)` and `fallback` discard those errors.
+- **Happened:** beet has no pass-through error hook; `finally` sees neither the result nor the
+  error. Timeouts raised by `timeout_ticks` have no leaf of ours to log from.
+- **Workaround:** `recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout>(pick_place, handler)`
+  whose generic handler logs and returns the same error, so the error set is unchanged. It adds a
+  `recover` node to the graph that never recovers anything.
+- **Suggestion:** an `on_error(n, fn)` (or `tap`) decorator that calls `fn(input, error)` and
+  passes the result through, with the input available so handlers need not capture it.
