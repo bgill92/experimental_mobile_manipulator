@@ -18,6 +18,8 @@ Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host s
 
 Upstream Elephant Robotics repos live in `external_packages/` as git submodules (clone with `git submodule update --init`). Only their description packages are built (see the `build` task in `pixi.toml`); the rest of those repos targets older ROS distros and will not build on Lyrical. Do not edit files inside the submodules.
 
+`external_packages/beet` is [beet](https://github.com/EzraBrooks/beet), a header-only C++20 behaviour tree library pinned at `436617cd`. It is not a colcon package: `src/emma_behaviors/CMakeLists.txt` pulls it in with `add_subdirectory`. Problems found in it go into `docs/beet-feedback.md`. The Rerun C++ SDK and viewer that `emma_behaviors` logs to come from pixi (`librerun-sdk`, `rerun-sdk`).
+
 ## License
 
 The project and every package under `src/` are MIT licensed (see `LICENSE`). Create new packages with `ros2 pkg create --license MIT ...` and keep `<license>MIT</license>` in each `package.xml`.
