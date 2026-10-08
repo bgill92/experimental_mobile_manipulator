@@ -27,6 +27,11 @@ pixi run build
 - [`emma_manipulation`](src/emma_manipulation/README.md): C++ arm planning library on roboplan
   (collision-aware IK, RRT and straight-line moves, grasp poses, trajectory timing) and the
   `move_arm` command-line tool that runs one planned motion in the sim.
+- [`emma_behaviors`](src/emma_behaviors/README.md): pick and place as a typed
+  [beet](https://github.com/EzraBrooks/beet) behaviour tree (C++20), with the tree and scene
+  logged to [Rerun](https://rerun.io). Work in progress: the leaves and tree are tested, the
+  executable and launch file are still to come. Problems found in beet are collected in
+  [`docs/beet-feedback.md`](docs/beet-feedback.md).
 
 ## View the robot
 
@@ -53,11 +58,11 @@ Launch arguments, example action goals, assumptions and caveats are in each pack
 ## Test
 
 ```bash
-pixi run test   # gtest (emma_manipulation), pytest and mypy (emma_perception)
+pixi run test   # gtest (emma_manipulation, emma_behaviors), pytest and mypy (emma_perception)
 ```
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The Elephant Robotics packages in `external_packages/`
+MIT, see [LICENSE](LICENSE). The Elephant Robotics packages and beet in `external_packages/`
 and the gripper meshes in `src/emma_description/meshes/parallel_gripper/` keep their own licenses.
 MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0.
