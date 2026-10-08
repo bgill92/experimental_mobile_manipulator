@@ -22,6 +22,8 @@ pixi run build
   and parallel gripper), RViz display launch, and the changes made to the upstream models.
 - [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
   mujoco_ros2_control, with arm, gripper and mecanum base controllers.
+- [`emma_perception`](src/emma_perception/README.md): finds the pick-and-place block in the wrist
+  camera's colour and depth images and publishes its pose on `/block_pose`.
 
 ## View the robot
 
@@ -44,6 +46,12 @@ pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/it
 ```
 
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
+
+## Test
+
+```bash
+pixi run test   # unit tests and mypy
+```
 
 ## License
 

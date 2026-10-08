@@ -13,13 +13,14 @@ in 3D. A learned detector can replace it later behind the same `/block_pose` top
 
 ## Running
 
-`emma_behaviors`' `pick_and_place.launch.py` starts the detector with the sim. On its own, with
-the sim running:
+Start the sim with the pick scene, the detector, and move the arm to the look pose (`LOOK_Q`), from
+which the wrist camera sees the block on the table (from the home pose it does not):
 
 ```bash
+pixi run sim mujoco_model:=$PWD/install/emma_simulation/share/emma_simulation/mujoco/pick_scene.xml
 pixi run bash -c "source install/setup.bash && ros2 run emma_perception block_detector --ros-args -p use_sim_time:=true"
-pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_arm --joints 0.862 0.771 -1.533 -0.695 -0.133 0.855"   # LOOK_Q
-pixi run bash -c "source install/setup.bash && ros2 topic echo /block_pose"
+pixi run bash -c "source install/setup.bash && ros2 action send_goal /arm_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory \"{trajectory: {joint_names: [joint2_to_joint1, joint3_to_joint2, joint4_to_joint3, joint5_to_joint4, joint6_to_joint5, joint6output_to_joint6], points: [{positions: [0.862, 0.771, -1.533, -0.695, -0.133, 0.855], time_from_start: {sec: 3}}]}}\""
+pixi run bash -c "source install/setup.bash && ros2 topic echo /block_pose"   # about (0.25, 0, 0.155) in base_link
 ```
 
 | Topic | Direction | Type |
@@ -56,8 +57,8 @@ For every colour and depth pair (`ApproximateTimeSynchronizer`, 50 ms slop):
    cube below the top. Yaw is wrapped to ±45°, since a cube looks the same every 90°. Roll and
    pitch are 0: the block is assumed to rest flat.
 
-The pose is published every frame; there is no filtering or debouncing. `emma_behaviors` takes
-one sample after the arm has settled at the look pose.
+The pose is published every frame; there is no filtering or debouncing. A consumer should take a
+sample after the arm has settled at the look pose.
 
 The node spins on a multi-threaded executor: the TF listener's callbacks are reentrant, so they
 keep arriving while an image callback waits in `lookup_transform`.
