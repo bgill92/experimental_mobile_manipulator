@@ -58,7 +58,7 @@ Launch arguments, example action goals, assumptions and caveats are in each pack
 ## Test
 
 ```bash
-pixi run test   # unit tests and linters
+pixi run test   # unit tests and mypy
 ```
 
 ## License

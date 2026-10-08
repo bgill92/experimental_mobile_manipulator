@@ -17,7 +17,7 @@ display = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_descri
 # Extra args pass through to the launch file, e.g. `pixi run sim headless:=true`. Builds first so
 # newly generated MJCF files are installed.
 sim = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py \"$@\"' --", depends-on = ["build"] }
-# Unit tests (and the ament linters) for the packages under src/.
+# Unit tests (and mypy) for the packages under src/.
 test = { cmd = "colcon test --packages-select emma_manipulation && colcon test-result --verbose", depends-on = ["build"] }
 # Downloads a MolmoSpaces iTHOR room (once) and writes a scene with emma in it. Args pass through:
 # `pixi run molmospaces-scene FloorPlan205 x y yaw --freeze-kg 4`. See src/emma_simulation/README.md.
