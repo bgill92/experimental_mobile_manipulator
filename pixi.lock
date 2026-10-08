@@ -506,6 +506,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/yarl-1.24.5-pyh7db6752_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/zipp-4.1.1-pyh5ded981_0.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-controller-manager-6.10.1-hb0f4dca_27.conda
+      - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-cv-bridge-4.1.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-desktop-0.13.0-hb0f4dca_25.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-joint-state-broadcaster-6.9.0-hb0f4dca_27.conda
       - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-joint-state-publisher-2.4.3-hb0f4dca_25.conda
@@ -8818,6 +8819,14 @@ packages:
   run_exports: {}
   size: 2079
   timestamp: 1790952903919
+- conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-cv-bridge-4.1.0-hb0f4dca_27.conda
+  sha256: 6152a0c9eb845f8f46068f95c0e63e1bb86a93bc352d11911c1f37be1ea36607
+  md5: 2d4e2d94b8a16b9b0a9fabb3c22f19f1
+  depends:
+  - ros2-cv-bridge ==4.1.0
+  run_exports: {}
+  size: 2031
+  timestamp: 1790902753262
 - conda: https://prefix.dev/robostack-lyrical/linux-64/ros-lyrical-desktop-0.13.0-hb0f4dca_25.conda
   sha256: f68bcb4b5c0dfbeff718a3c4ac958f85b2f6686a20c20c2bfda4df951c62d395
   md5: 7340dccd87982eb649b5e138b6b86296
