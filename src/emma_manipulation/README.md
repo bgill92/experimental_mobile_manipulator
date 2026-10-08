@@ -4,8 +4,7 @@ Arm motion planning for **emma** with [roboplan](https://github.com/open-plannin
 used as an in-process C++ library: collision-aware IK, RRT-Connect with path shortcutting, short
 straight-line moves, and top-down grasp poses for a small block. The library (`ArmPlanner`,
 `graspCandidates`, `toJointTrajectory`) has no ROS node in it; `move_arm` is the thin ROS layer
-that runs a plan on the simulated (or real) `arm_controller`. The `emma_behaviors` pick-and-place
-tree links the same library.
+that runs a plan on the simulated (or real) `arm_controller`.
 
 ## Contents
 
@@ -64,10 +63,14 @@ std::vector<Eigen::Matrix4d> pregrasps;
 for (const Eigen::Matrix4d& g : grasps) {
   pregrasps.push_back(offset(g, kPreOffset));
 }
-if (const auto found = planner.planToAny(q, pregrasps); found.has_value()) {
-  const auto down = planner.planLinear(found->path.back(), grasps[found->index]);
-  planner.attach("block", down->back());                         // held objects move with the wrist
+const tl::expected<ArmPlanner::PlanToAny, std::string> found = planner.planToAny(q, pregrasps);
+if (found.has_value()) {
   const trajectory_msgs::msg::JointTrajectory traj = toJointTrajectory(found->path);
+  const tl::expected<std::vector<Eigen::VectorXd>, std::string> down =
+      planner.planLinear(found->path.back(), grasps[found->index]);
+  if (down.has_value()) {
+    planner.attach("block", down->back());                       // held objects move with the wrist
+  }
 }
 ```
 
@@ -76,7 +79,7 @@ roboplan, tinyxml2, Eigen and message dependencies come along transitively.
 
 | Call | Returns |
 |---|---|
-| `ArmPlanner(urdf_xml, ArmPlannerOptions{base_frame = "base_link", tip_frame = "tcp", max_planning_time = 2.0, seed = nullopt})` | Planner for the chain `g_base → tip_frame`. `seed` makes IK, RRT and shortcutting repeatable. Throws `std::runtime_error` if the URDF cannot be loaded. Not thread-safe. |
+| `ArmPlanner(urdf_xml, ArmPlannerOptions{base_frame = "base_link", tip_frame = "tcp", max_planning_time = 2.0, seed = nullopt})` | Planner for the chain `g_base → tip_frame`. `seed` makes IK, RRT and shortcutting repeatable. Throws `std::runtime_error` if the URDF cannot be loaded, `ament_index_cpp::PackageNotFoundError` if a mesh package is missing. Not thread-safe. |
 | `ArmPlanner::armPositions(joint_state)` | The `kArmJoints` positions of a `JointState`, in order, or an error listing the missing joints. |
 | `fullQ(q)` | The scene's full position vector with the arm slots replaced by `q`. |
 | `clamp(q)` | `q` clamped into the joint limits. |
