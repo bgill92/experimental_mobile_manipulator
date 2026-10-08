@@ -2,7 +2,7 @@
 
 /// @file
 /// The tree's only contact with ROS: topic caches and action clients, filled by callbacks that
-/// run inside `rclcpp::spin_some` on the main thread once per tick, before `Runner::tick()`.
+/// run in the main loop's executor (`spin_some`) once per tick, before `Runner::tick()`.
 
 #include <chrono>
 #include <cstdint>
