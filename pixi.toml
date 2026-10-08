@@ -17,8 +17,12 @@ display = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_descri
 # Extra args pass through to the launch file, e.g. `pixi run sim headless:=true`. Builds first so
 # newly generated MJCF files are installed.
 sim = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py \"$@\"' --", depends-on = ["build"] }
-# Unit tests (gtest for emma_manipulation, pytest and mypy for emma_perception).
-test = { cmd = "colcon test --packages-select emma_manipulation emma_perception && colcon test-result --verbose", depends-on = ["build"] }
+# Unit tests (gtest for emma_manipulation and emma_behaviors, pytest and mypy for emma_perception).
+test = { cmd = "colcon test --packages-select emma_manipulation emma_behaviors emma_perception && colcon test-result --verbose", depends-on = ["build"] }
+# Pick and place of the block the wrist camera finds, in the sim (MuJoCo viewer + RViz + Rerun). Args pass through.
+pick-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_behaviors pick_and_place.launch.py \"$@\"' --", depends-on = ["build"] }
+# Headless pick and place; exits 0 only if the behaviour tree succeeds within 240 s. Writes log/pick_check.rrd.
+pick-check = { cmd = "bash src/emma_behaviors/scripts/pick_check.sh", depends-on = ["build"] }
 # Downloads a MolmoSpaces iTHOR room (once) and writes a scene with emma in it. Args pass through:
 # `pixi run molmospaces-scene FloorPlan205 x y yaw --freeze-kg 4`. See src/emma_simulation/README.md.
 molmospaces-scene = "python src/emma_simulation/scripts/molmospaces_scene.py"
@@ -48,6 +52,8 @@ ros-lyrical-mujoco-ros2-control-plugins = ">=0.1.2,<0.2"
 ros-lyrical-mujoco-ros2-control-msgs = ">=0.1.2,<0.2"
 ros-lyrical-cv-bridge = ">=4.1.0,<5"
 ros-lyrical-roboplan = ">=0.7.0,<0.8"
+librerun-sdk = ">=0.38.1,<0.39"
+rerun-sdk = ">=0.38.1,<0.39"
 
 [pypi-dependencies]
 obj2mjcf = ">=0.0.25, <0.0.26"
