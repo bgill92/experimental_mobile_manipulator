@@ -98,9 +98,10 @@ gets images. With the arm folded at the start pose the camera sees the sky and t
 Other useful topics:
 - `/simulator/floating_base_state`: ground-truth base pose (`nav_msgs/Odometry`, frame `odom`).
   Compare it with `/mecanum_drive_controller/odometry` to see wheel-odometry drift.
-- `/free_joint_states`: ground-truth pose of every free body (`mujoco_ros2_control_msgs/msg/FreeJointStateArray`),
-  relative to the robot's `base_footprint` body, at 10 Hz. In `pick_scene.xml` that includes the
-  `block`; the robot's own free joint always reads identity.
+- `/free_joint_states`: ground-truth pose of every free body
+  (`mujoco_ros2_control_msgs/msg/FreeJointStateArray`), relative to the robot's `base_footprint`
+  body, at 10 Hz. In `pick_scene.xml` that includes the `block`; the robot's own free joint always
+  reads identity.
 - `/clock`: sim time. Every node runs with `use_sim_time`, so pausing MuJoCo pauses the controllers.
 
 ### Living room scene
@@ -115,9 +116,10 @@ pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/it
 
 The default is living room `FloorPlan201`, with emma in an open strip beside the sofa facing +y.
 Other rooms take the plan name and a spawn pose in the room's world frame:
-`pixi run molmospaces-scene FloorPlan205 x y yaw`. `--freeze-kg` sets the static threshold (see below). iTHOR living rooms are `FloorPlan201`-`230`,
-bedrooms `301`-`330`, kitchens `1`-`30`, bathrooms `401`-`430`. Pick the pose by rendering or
-viewing the bare room (`<plan>_physics.xml`); a pose inside furniture leaves emma stuck on top of it.
+`pixi run molmospaces-scene FloorPlan205 x y yaw`. `--freeze-kg` sets the static threshold (see
+below). iTHOR living rooms are `FloorPlan201`-`230`, bedrooms `301`-`330`, kitchens `1`-`30`,
+bathrooms `401`-`430`. Pick the pose by rendering or viewing the bare room
+(`<plan>_physics.xml`); a pose inside furniture leaves emma stuck on top of it.
 
 The script fetches only the room archive and the object files it references, using HTTP range
 requests into the dataset's shard tars. It then attaches emma's MJCF to the room with `MjSpec` and
