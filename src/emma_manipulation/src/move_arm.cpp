@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <format>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <numbers>
@@ -36,6 +37,7 @@
 namespace {
 
 using FollowJointTrajectory = control_msgs::action::FollowJointTrajectory;
+using GoalHandle = rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
 using namespace std::chrono_literals;
 
 constexpr std::string_view kAction = "/arm_controller/follow_joint_trajectory";
@@ -89,7 +91,8 @@ struct Args {
 
 [[nodiscard]] bool isFlag(std::string_view arg) {
   // A leading '-' followed by a digit or '.' is a negative number, not a flag.
-  return arg.size() > 1 && arg[0] == '-' && !(std::isdigit(static_cast<unsigned char>(arg[1])) != 0 || arg[1] == '.');
+  return arg.size() > 1 && arg[0] == '-' &&
+         !(std::isdigit(static_cast<unsigned char>(arg[1])) != 0 || arg[1] == '.');
 }
 
 /// Parses the arguments after the program name, mirroring the old argparse interface.
@@ -219,20 +222,21 @@ class MoveArm {
     if (!client_->wait_for_action_server(10s)) {
       return tl::unexpected(std::format("{} not available", kAction));
     }
-    auto send = client_->async_send_goal(goal);
+    std::shared_future<GoalHandle::SharedPtr> send = client_->async_send_goal(goal);
     if (executor_.spin_until_future_complete(send, 10s) != rclcpp::FutureReturnCode::SUCCESS) {
       return tl::unexpected("no reply to the trajectory goal");
     }
-    const auto handle = send.get();
+    const GoalHandle::SharedPtr handle = send.get();
     if (!handle) {
       return tl::unexpected("trajectory goal rejected");
     }
-    auto result_future = client_->async_get_result(handle);
+    std::shared_future<GoalHandle::WrappedResult> result_future =
+        client_->async_get_result(handle);
     if (executor_.spin_until_future_complete(result_future, timeout) !=
         rclcpp::FutureReturnCode::SUCCESS) {
       return tl::unexpected("timed out waiting for the trajectory to finish");
     }
-    const auto wrapped = result_future.get();
+    const GoalHandle::WrappedResult wrapped = result_future.get();
     const std::int32_t code = wrapped.result ? wrapped.result->error_code : -1;
     if (wrapped.code != rclcpp_action::ResultCode::SUCCEEDED ||
         code != FollowJointTrajectory::Result::SUCCESSFUL) {
