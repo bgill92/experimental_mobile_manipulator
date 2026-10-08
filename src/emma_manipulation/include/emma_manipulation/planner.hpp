@@ -87,6 +87,7 @@ class ArmPlanner {
 
   /// @throws std::runtime_error if the URDF cannot be rewritten/loaded or the group cannot be
   /// built.
+  /// @throws ament_index_cpp::PackageNotFoundError if a mesh package is not installed.
   explicit ArmPlanner(const std::string& urdf_xml, const Options& options = {});
   ~ArmPlanner();
 

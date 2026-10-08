@@ -155,8 +155,17 @@ ArmPlanner::ArmPlanner(const std::string& urdf_xml, const Options& options) : op
   if (!urdf.has_value()) {
     throw std::runtime_error(urdf.error());
   }
-  scene_ = std::make_shared<roboplan::Scene>(
-      "emma", roboplan::loadUrdfSceneDescriptionFromXml(urdf->xml, meshPackagePaths()));
+  const std::vector<std::filesystem::path> mesh_paths = meshPackagePaths();
+  // Pinocchio and coal report a bad model with logic_error subclasses; rethrow them as the
+  // documented runtime_error so callers need only one handler.
+  try {
+    scene_ = std::make_shared<roboplan::Scene>(
+        "emma", roboplan::loadUrdfSceneDescriptionFromXml(urdf->xml, mesh_paths));
+  } catch (const std::invalid_argument& e) {
+    throw std::runtime_error(std::string("cannot load the URDF into roboplan: ") + e.what());
+  } catch (const std::out_of_range& e) {
+    throw std::runtime_error(std::string("cannot load the URDF into roboplan: ") + e.what());
+  }
   check(scene_->addGroupFromChain(std::string(kGroup), "g_base", options_.tip_frame),
         "addGroupFromChain");
   check(scene_->allowAdjacentLinkCollisions(), "allowAdjacentLinkCollisions");
