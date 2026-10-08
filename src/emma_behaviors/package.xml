@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>emma_behaviors</name>
+  <version>0.0.0</version>
+  <description>Pick and place for emma as a typed beet behaviour tree, with the tree and scene logged to Rerun.</description>
+  <maintainer email="5256190+bgill92@users.noreply.github.com">Bilal Gill</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- beet (external_packages/beet, add_subdirectory) and the Rerun C++ SDK (pixi
+       librerun-sdk) have no ROS package names, so they are not listed here. -->
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>control_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>emma_manipulation</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>eigen</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>emma_simulation</exec_depend>
+  <exec_depend>emma_perception</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>xacro</test_depend>
+  <test_depend>emma_description</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_xmllint</test_depend>
+  <test_depend>ament_cmake_lint_cmake</test_depend>
+  <test_depend>ament_cmake_flake8</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
