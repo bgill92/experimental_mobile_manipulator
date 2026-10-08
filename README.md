@@ -29,8 +29,7 @@ pixi run build
   `move_arm` command-line tool that runs one planned motion in the sim.
 - [`emma_behaviors`](src/emma_behaviors/README.md): pick and place as a typed
   [beet](https://github.com/EzraBrooks/beet) behaviour tree (C++20), with the tree and scene
-  logged to [Rerun](https://rerun.io). Work in progress: the leaves and tree are tested, the
-  executable and launch file are still to come. Problems found in beet are collected in
+  logged to [Rerun](https://rerun.io). Problems found in beet are collected in
   [`docs/beet-feedback.md`](docs/beet-feedback.md).
 
 ## View the robot
@@ -51,6 +50,14 @@ To put emma in a furnished living room from [MolmoSpaces](https://github.com/all
 ```bash
 pixi run molmospaces-scene   # downloads the room once, writes the combined scene
 pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
+```
+
+## Pick and place
+
+```bash
+pixi run pick-demo                 # sim + RViz + Rerun viewer; the arm picks the block and places it 8 cm over
+pixi run pick-check                # headless pass/fail (240 s limit), records to log/pick_check.rrd
+pixi run rerun log/pick_check.rrd  # replay that recording
 ```
 
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
