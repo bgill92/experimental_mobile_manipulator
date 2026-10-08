@@ -11,3 +11,6 @@ src/emma_simulation/mujoco/molmospaces/
 # python
 __pycache__/
 *.pyc
+
+# MuJoCo
+MUJOCO_LOG.TXT
