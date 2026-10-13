@@ -4,7 +4,8 @@ Arm motion planning for **emma** with [roboplan](https://github.com/open-plannin
 used as an in-process C++ library: collision-aware IK, RRT-Connect with path shortcutting, short
 straight-line moves, and top-down grasp poses for a small block. The library (`ArmPlanner`,
 `graspCandidates`, `toJointTrajectory`) has no ROS node in it; `move_arm` is the thin ROS layer
-that runs a plan on the simulated (or real) `arm_controller`.
+that runs a plan on the simulated (or real) `arm_controller`. The `emma_behaviors` pick-and-place
+tree links the same library.
 
 ## Contents
 
