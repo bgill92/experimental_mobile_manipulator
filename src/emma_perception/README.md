@@ -13,8 +13,8 @@ in 3D. A learned detector can replace it later behind the same `/block_pose` top
 
 ## Running
 
-Start the sim with the pick scene, the detector, and move the arm to the look pose (`LOOK_Q`), from
-which the wrist camera sees the block on the table (from the home pose it does not):
+Start the sim with the pick scene, the detector, and move the arm to the look pose, from which the
+wrist camera sees the block on the table (from the home pose it does not):
 
 ```bash
 pixi run sim mujoco_model:=$PWD/install/emma_simulation/share/emma_simulation/mujoco/pick_scene.xml
@@ -69,9 +69,9 @@ keep arriving while an image callback waits in `lookup_transform`.
   (or a red-brown table under different lighting) confuses it. The sim table's hue is about 15
   on OpenCV's scale, above the default upper bound of 10.
 - **A cube of known size resting flat**: the centre comes from the top face and `cube_size`.
-- **Accuracy**: in the sim, at `LOOK_Q` (about 0.2 m away), the published position is within
-  about 1 mm of MuJoCo's ground truth for the block at `BLOCK_START` and at `PLACE_XYZ`. Taking
-  the top face matters: the first version backprojected the blob centre at the median depth,
+- **Accuracy**: in the sim, at the look pose (about 0.2 m away), the published position is
+  within about 1 mm of MuJoCo's ground truth for the block at its start (0.25, 0, 0.155) and at
+  the place target (0.25, 0.08, 0.155). Taking the top face matters: the first version backprojected the blob centre at the median depth,
   which mixes in the side face and came out about 2 mm low and 2 mm short.
 - **Sim camera only so far**: the topic names follow the Orbbec ROS 2 driver, so a real
   Gemini 305 should drop in, but its colour and depth need to be registered (aligned) and the
