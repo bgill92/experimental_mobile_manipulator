@@ -42,6 +42,8 @@ trimesh = ">=5.1.1,<6"
 pycollada = ">=0.9.3,<0.10"
 ros-lyrical-ros2controlcli = ">=6.10.1,<7"
 ros-lyrical-mecanum-drive-controller = ">=6.9.0,<7"
+ros-lyrical-mujoco-ros2-control-plugins = ">=0.1.2,<0.2"
+ros-lyrical-mujoco-ros2-control-msgs = ">=0.1.2,<0.2"
 
 [pypi-dependencies]
 obj2mjcf = ">=0.0.25, <0.0.26"

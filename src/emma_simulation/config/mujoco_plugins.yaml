@@ -1,0 +1,11 @@
+# MuJoCo ROS 2 plugins loaded by mujoco_ros2_control (sim.launch.py passes this file to
+# ros2_control_node). The free-joint publisher gives ground-truth poses of loose objects (the
+# pick-and-place block) and of the base, relative to the robot's base_footprint body.
+/**:
+  ros__parameters:
+    mujoco_plugins:
+      free_joint_state_publisher:
+        type: mujoco_ros2_control_plugins/FreeJointStatePublisherPlugin
+        frame_id: base_footprint
+        topic: /free_joint_states
+        publish_rate: 10.0

@@ -1,0 +1,43 @@
+<mujoco model="emma_pick_scene">
+  <!-- scene.xml plus a table and a 10 mm block for the pick-and-place demo. Keep the rest in
+       sync with scene.xml. Collision bits: 1 floor and structure, 2 graspable objects,
+       4 fingers (see README). -->
+  <include file="mujoco_description_formatted.xml"/>
+
+  <!-- Noslip iterations stop a pinched block from creeping out of the fingers. -->
+  <option noslip_iterations="3"/>
+
+  <statistic center="0 0 0.3" extent="1"/>
+
+  <visual>
+    <headlight diffuse="0.4 0.4 0.4" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <global azimuth="120" elevation="-20"/>
+    <!-- The default shadowclip (1 x extent) speckles the floor and the base with shadow
+         acne; 6 renders clean. -->
+    <map shadowclip="6"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.82 0.84 0.86" rgb2="0.45 0.55 0.68" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.6 0.6 0.6" rgb2="0.5 0.5 0.5"
+             markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.1"/>
+  </asset>
+
+  <worldbody>
+    <!-- trackcom keeps the shadow map centred on the robot once the base drives. -->
+    <light name="key" directional="true" mode="trackcom" pos="0 0 2" dir="-0.45 0.35 -0.82" castshadow="true"/>
+    <geom name="floor" type="plane" size="0 0 0.01" material="groundplane" contype="1" conaffinity="0"/>
+    <!-- Matches TABLE_CENTER / TABLE_HALF_SIZE in emma_manipulation/constants.py. Bodies after
+         the robot include, so the robot keeps its body and joint indices. -->
+    <geom name="table" type="box" pos="0.30 0 0.075" size="0.10 0.15 0.075" rgba="0.55 0.4 0.25 1"
+          contype="1" conaffinity="6"/>
+    <!-- BLOCK_START: a 10 mm, 5 g cube resting on the table. -->
+    <body name="block" pos="0.25 0 0.155">
+      <freejoint name="block_joint"/>
+      <geom name="block" type="box" size="0.005 0.005 0.005" mass="0.005" rgba="0.9 0.1 0.1 1"
+            contype="2" conaffinity="5" condim="4" friction="1.5 0.02 0.0005" solref="0.005 1"
+            solimp="0.95 0.99 0.001"/>
+    </body>
+  </worldbody>
+</mujoco>
