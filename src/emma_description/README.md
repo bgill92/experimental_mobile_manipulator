@@ -54,9 +54,9 @@ With `ros2_control:=mujoco` the block exposes:
 TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_flange → gripper_base →
 {gripper_left, gripper_right, tcp, wrist_camera_link → wrist_camera_color_optical_frame}`.
 `tcp` is the tool centre point, fixed 45 mm along `gripper_base` z, between the fingertips
-(which end at 48.5 mm). `wrist_camera_link` follows REP 103 (x forward) and
-`wrist_camera_color_optical_frame` is the usual optical frame (z forward, x right, y down in the
-image); both sit at the camera's front face. A mass-only
+(which end at 48.5 mm); `emma_manipulation` plans for it. `wrist_camera_link` follows REP 103
+(x forward) and `wrist_camera_color_optical_frame` is the usual optical frame (z forward,
+x right, y down in the image); both sit at the camera's front face. A mass-only
 `base_inertia` link and the four `{front,rear}_{left,right}_wheel` links also hang off
 `base_footprint`.
 
@@ -123,8 +123,9 @@ submodule is not edited. `emma.urdf.xacro` adds what it lacks: the mass through 
   origin so that the optical frame, and the sim camera on it, sit at the front face. One camera
   stands in for the aligned colour and depth streams; `emma_simulation` gives it a 65° vertical
   field of view at 640 × 400 (about 91° horizontally, between the 94° colour and 88° depth specs).
-- **Start pose**: the arm starts folded with joint 4 at 0.3 rad. With the camera on, the
-  earlier -0.495 rad puts the camera inside the upper arm.
+- **Start pose**: the arm starts folded with joint 4 at 0.3 rad (`home_q` in
+  `emma_manipulation`'s `config/manipulation.yaml`). With the camera on, the earlier -0.495 rad puts the camera inside the
+  upper arm.
 - **Effort limits**: all joints use upstream's 1000, the wheels included. That is unrealistic
   but harmless; the simulated wheel motors clamp torque on their own.
 - **Wheel velocity limit**: 30 rad/s is a placeholder.

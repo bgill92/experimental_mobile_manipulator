@@ -1,0 +1,12 @@
+# Values tuned on the robot, read at startup so changing them needs no rebuild. In metres / radians
+# and base_link. Write every number with a decimal point: ROS reads 0 as an integer and rejects it.
+/**:
+  ros__parameters:
+    # Arm folded back over the base, in arm_controller joint order. Keep equal to the ros2_control
+    # initial_value in emma_description/urdf/emma.urdf.xacro. The wrist is tipped up (joint 4 at
+    # 0.3, not -0.495) so the wrist camera clears the arm.
+    home_q: [0.0, 2.259, -2.505, 0.3, 0.0, 0.0]
+    # Table in front of the AGV: box centre and full side lengths. Top at z = 0.15, x from 0.20 to
+    # 0.40.
+    table_center: [0.30, 0.0, 0.075]
+    table_size: [0.20, 0.30, 0.15]
