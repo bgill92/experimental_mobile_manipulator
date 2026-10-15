@@ -25,7 +25,9 @@ from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
-from sensor_msgs.msg import CameraInfo, Image
+from sensor_msgs.msg import CameraInfo, Image, PointCloud2
+from sensor_msgs_py import point_cloud2
+from std_msgs.msg import Header
 from tf2_ros import Buffer, TransformException, TransformListener
 
 # Depth readings outside this range (metres) are not the block: the Gemini 305 sees from
@@ -106,7 +108,7 @@ def blob_points(blob: np.ndarray, depth: np.ndarray, k: Intrinsics) -> np.ndarra
 
 
 def top_face(points: np.ndarray, cube_size: float, band: float = 0.002
-             ) -> tuple[np.ndarray, float] | None:
+             ) -> tuple[np.ndarray, float, np.ndarray] | None:
     """
     Cube centre and yaw from its visible surface points in a z-up frame.
 
@@ -114,15 +116,17 @@ def top_face(points: np.ndarray, cube_size: float, band: float = 0.002
     points within `band` of the top are the top face: the rectangle around them gives the
     centre in x, y and the yaw (wrapped to a quarter turn), and the centre lies half a cube
     below the top. The 95th percentile stands in for the top so a few stray points cannot
-    lift it. None with fewer than 3 top points.
+    lift it. Also returns the boolean mask of the points taken as the top face. None with
+    fewer than 3 top points.
     """
     top_z = float(np.percentile(points[:, 2], 95))
-    top = points[points[:, 2] > top_z - band]
+    is_top = points[:, 2] > top_z - band
+    top = points[is_top]
     if len(top) < 3:
         return None
     (x, y), _, angle_deg = cv2.minAreaRect(top[:, :2].astype(np.float32))
     centre = np.array([x, y, top_z - cube_size / 2])
-    return centre, wrap_quarter_turn(math.radians(angle_deg))
+    return centre, wrap_quarter_turn(math.radians(angle_deg)), is_top
 
 
 def transform_matrix(transform: TransformStamped) -> np.ndarray:
@@ -172,6 +176,12 @@ class BlockDetector(Node):
         self.pose_pub = self.create_publisher(PoseStamped, '/block_pose', 10)
         self.debug_pub = (self.create_publisher(Image, '~/debug_image', 1)
                           if self.debug else None)
+        self.debug_mask_pub = (self.create_publisher(Image, '~/debug_mask', 1)
+                               if self.debug else None)
+        self.debug_points_pub = (self.create_publisher(PointCloud2, '~/debug_points', 1)
+                                 if self.debug else None)
+        self.debug_top_pub = (self.create_publisher(PointCloud2, '~/debug_top_points', 1)
+                              if self.debug else None)
         self.create_subscription(CameraInfo, info_topic, self.on_info, qos_profile_sensor_data)
         color = message_filters.Subscriber(
             self, Image, color_topic, qos_profile=qos_profile_sensor_data)
@@ -200,27 +210,36 @@ class BlockDetector(Node):
             depth = depth / 1000.0  # Real drivers publish millimetres.
         mask = segment(bgr, self.hsv_lower, self.hsv_upper)
         found = locate(mask, depth, self.min_area)
-        if self.debug_pub is not None:
-            self.publish_debug(bgr, mask, found, color_msg)
-        if found is None:
-            self.warn('no block in view')
-            return
-        blob = largest_blob(mask, self.min_area)
-        assert blob is not None  # locate() found it.
-        points = blob_points(blob, depth, self.k)
+        # Filled in as far as this frame gets, for the debug outputs.
+        points: np.ndarray | None = None
+        is_top: np.ndarray | None = None
         try:
-            transform = self.tf_buffer.lookup_transform(
-                self.target_frame, color_msg.header.frame_id,
-                Time.from_msg(color_msg.header.stamp), timeout=Duration(seconds=0.2))
-        except TransformException as error:
-            self.warn(f'no transform to {self.target_frame}: {error}')
-            return
-        matrix = transform_matrix(transform)
-        result = top_face(points @ matrix[:3, :3].T + matrix[:3, 3], self.cube_size)
-        if result is None:
-            self.warn('too few points on the block top')
-            return
-        centre, yaw = result
+            if found is None:
+                self.warn('no block in view')
+                return
+            blob = largest_blob(mask, self.min_area)
+            assert blob is not None  # locate() found it.
+            optical_points = blob_points(blob, depth, self.k)
+            try:
+                transform = self.tf_buffer.lookup_transform(
+                    self.target_frame, color_msg.header.frame_id,
+                    Time.from_msg(color_msg.header.stamp), timeout=Duration(seconds=0.2))
+            except TransformException as error:
+                self.warn(f'no transform to {self.target_frame}: {error}')
+                return
+            matrix = transform_matrix(transform)
+            points = optical_points @ matrix[:3, :3].T + matrix[:3, 3]
+            result = top_face(points, self.cube_size)
+            if result is None:
+                self.warn('too few points on the block top')
+                return
+            centre, yaw, is_top = result
+            self.publish_pose(centre, yaw, color_msg)
+        finally:
+            if self.debug:
+                self.publish_debug(bgr, mask, found, points, is_top, color_msg)
+
+    def publish_pose(self, centre: np.ndarray, yaw: float, color_msg: Image) -> None:
         pose = PoseStamped()
         pose.header.stamp = color_msg.header.stamp
         pose.header.frame_id = self.target_frame
@@ -233,8 +252,27 @@ class BlockDetector(Node):
 
     def publish_debug(self, bgr: np.ndarray, mask: np.ndarray,
                       found: tuple[float, float, float, float] | None,
+                      points: np.ndarray | None, is_top: np.ndarray | None,
                       color_msg: Image) -> None:
         assert self.debug_pub is not None
+        assert self.debug_mask_pub is not None
+        assert self.debug_points_pub is not None
+        assert self.debug_top_pub is not None
+        n_points = 0 if points is None else len(points)
+        n_top = 0 if is_top is None else int(is_top.sum())
+        self.get_logger().debug(f'blob points {n_points}, top face points {n_top}')
+
+        mask_msg = self.bridge.cv2_to_imgmsg(mask, 'mono8')
+        mask_msg.header = color_msg.header
+        self.debug_mask_pub.publish(mask_msg)
+
+        # Empty clouds when nothing was found, so RViz does not keep showing a stale one.
+        header = Header(stamp=color_msg.header.stamp, frame_id=self.target_frame)
+        cloud = np.empty((0, 3)) if points is None else points
+        top = np.empty((0, 3)) if points is None or is_top is None else points[is_top]
+        self.debug_points_pub.publish(point_cloud2.create_cloud_xyz32(header, cloud))
+        self.debug_top_pub.publish(point_cloud2.create_cloud_xyz32(header, top))
+
         image = bgr.copy()
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(image, contours, -1, (0, 255, 0), 1)
@@ -244,6 +282,8 @@ class BlockDetector(Node):
                            cv2.MARKER_CROSS, 12, 1)
             cv2.putText(image, f'{d:.3f} m', (int(u) + 8, int(v) - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
+        cv2.putText(image, f'blob {n_points} pts, top face {n_top} pts', (8, 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 1)
         msg = self.bridge.cv2_to_imgmsg(image, 'bgr8')
         msg.header = color_msg.header
         self.debug_pub.publish(msg)

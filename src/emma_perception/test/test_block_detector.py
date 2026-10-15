@@ -110,6 +110,9 @@ def cube_surface(centre, yaw_deg: float, size: float = 0.01, n: int = 15) -> np.
 def test_top_face_ignores_the_side_face(yaw_deg: float) -> None:
     result = top_face(cube_surface([0.25, 0.02, 0.155], yaw_deg), 0.01)
     assert result is not None
-    centre, yaw = result
+    centre, yaw, is_top = result
     np.testing.assert_allclose(centre, [0.25, 0.02, 0.155], atol=1e-3)
     assert math.degrees(yaw) == pytest.approx(yaw_deg, abs=3.0)
+    # Every top-face point, plus the side face's top rows that fall inside the 2 mm band.
+    assert is_top[:225].all()
+    assert is_top.sum() == 225 + 3 * 15

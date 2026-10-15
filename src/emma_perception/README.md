@@ -23,6 +23,12 @@ pixi run bash -c "source install/setup.bash && ros2 action send_goal /arm_contro
 pixi run bash -c "source install/setup.bash && ros2 topic echo /block_pose"   # about (0.25, 0, 0.155) in base_link
 ```
 
+To see what the detector sees, add `-p debug:=true` (and `--log-level block_detector:=debug` for
+the point counts in the log). Watch `/block_detector/debug_image` and `/block_detector/debug_mask`
+in `rqt_image_view`, and add two PointCloud2 displays in RViz (fixed frame `base_link`, different
+colours) for `/block_detector/debug_points` and `/block_detector/debug_top_points`. The top-face
+cloud includes the top rows of the visible side faces that fall inside the 2 mm band.
+
 | Topic | Direction | Type |
 |---|---|---|
 | `/wrist_camera/color/image_raw` | in | `sensor_msgs/Image` (`rgb8` or `bgr8`) |
@@ -30,7 +36,10 @@ pixi run bash -c "source install/setup.bash && ros2 topic echo /block_pose"   # 
 | `/wrist_camera/color/camera_info` | in | `sensor_msgs/CameraInfo` |
 | `/tf`, `/tf_static` | in | camera pose at the image time |
 | `/block_pose` | out | `geometry_msgs/PoseStamped` in `target_frame`, stamped with the image time |
-| `~/debug_image` | out, with `debug` | colour image with the blob outline and centre |
+| `~/debug_image` | out, with `debug` | colour image with the red outlines, the blob centre and its depth, and the blob / top-face point counts |
+| `~/debug_mask` | out, with `debug` | `mono8` mask of every pixel inside the HSV range, before the largest blob is picked |
+| `~/debug_points` | out, with `debug` | `PointCloud2` in `target_frame`: every blob pixel with a valid depth |
+| `~/debug_top_points` | out, with `debug` | `PointCloud2` in `target_frame`: the points taken as the top face |
 
 | Parameter | Default | Meaning |
 |---|---|---|
@@ -38,7 +47,7 @@ pixi run bash -c "source install/setup.bash && ros2 topic echo /block_pose"   # 
 | `min_area_px` | `30` | Smallest blob that counts as the block. |
 | `target_frame` | `base_link` | Frame of the published pose; z must point up. |
 | `cube_size` | `0.01` | Block edge length, m. |
-| `debug` | `false` | Publish `~/debug_image`. |
+| `debug` | `false` | Publish the `~/debug_*` topics and log the point counts at debug level. |
 | `color_topic`, `depth_topic`, `info_topic` | the wrist camera topics above | Inputs. |
 
 ## How it works
