@@ -1,4 +1,5 @@
-// Planner checks against emma's real URDF, with the table and block in the scene. The tests share
+// Planner checks against emma's real URDF and config/manipulation.yaml, with the table and block
+// in the scene. The tests share
 // one seeded planner and run in file order, so the random draws (and results) are reproducible.
 
 #include <cmath>
@@ -16,10 +17,12 @@
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <gtest/gtest.h>
+#include <rclcpp/rclcpp.hpp>
 #include <roboplan/core/pose_utils.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 
+#include "emma_manipulation/config.hpp"
 #include "emma_manipulation/constants.hpp"
 #include "emma_manipulation/grasp.hpp"
 #include "emma_manipulation/planner.hpp"
@@ -55,34 +58,47 @@ constexpr double kDeg = std::numbers::pi / 180.0;
 class PlannerTest : public testing::Test {
  protected:
   static void SetUpTestSuite() {
+    // The YAML moves under these tests' feet, so they check the values the robot will use.
+    rclcpp::init(0, nullptr);
+    const rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>(
+        "test_planner",
+        rclcpp::NodeOptions().arguments({"--ros-args", "--params-file", EMMA_TEST_CONFIG}));
+    const tl::expected<ArmConfig, std::string> config = loadArmConfig(*node);
+    ASSERT_TRUE(config.has_value()) << config.error();
+    home_q_ = config->home_q;
     const std::string urdf = readFile(EMMA_TEST_URDF);
     ASSERT_FALSE(urdf.empty()) << "cannot read " << EMMA_TEST_URDF;
     planner_ = std::make_unique<ArmPlanner>(urdf, ArmPlannerOptions{.seed = 7U});
-    planner_->addBox("table", 2.0 * kTableHalfSize, translation(kTableCenter));
+    planner_->addBox("table", config->table_size, translation(config->table_center));
     planner_->addBox("block", Eigen::Vector3d::Constant(kBlockSize), translation(kBlockStart));
-    const Eigen::Vector2d arm_base_xy = planner_->fk(kHomeQ, "g_base").block<2, 1>(0, 3);
+    const Eigen::Vector2d arm_base_xy = planner_->fk(home_q_, "g_base").block<2, 1>(0, 3);
     grasps_ = graspCandidates(kBlockStart, 0.0, arm_base_xy);
   }
 
-  static void TearDownTestSuite() { planner_.reset(); }
+  static void TearDownTestSuite() {
+    planner_.reset();
+    rclcpp::shutdown();
+  }
 
   // A failed ASSERT in SetUpTestSuite only leaves it early; fail each test instead of crashing.
   void SetUp() override { ASSERT_NE(planner_, nullptr) << "planner fixture not built"; }
 
   static std::unique_ptr<ArmPlanner> planner_;
   static std::vector<Eigen::Matrix4d> grasps_;
+  static Eigen::VectorXd home_q_;
 };
 
 std::unique_ptr<ArmPlanner> PlannerTest::planner_;
 std::vector<Eigen::Matrix4d> PlannerTest::grasps_;
+Eigen::VectorXd PlannerTest::home_q_;
 
 TEST_F(PlannerTest, HomeCollisionFree) {
-  EXPECT_TRUE(planner_->fk(kHomeQ).allFinite());
-  EXPECT_FALSE(planner_->hasCollisions(kHomeQ));
+  EXPECT_TRUE(planner_->fk(home_q_).allFinite());
+  EXPECT_FALSE(planner_->hasCollisions(home_q_));
 }
 
 TEST_F(PlannerTest, TcpIs45mmPastGripperBase) {
-  const Eigen::Matrix4d rel = planner_->fk(kHomeQ, "gripper_base").inverse() * planner_->fk(kHomeQ);
+  const Eigen::Matrix4d rel = planner_->fk(home_q_, "gripper_base").inverse() * planner_->fk(home_q_);
   EXPECT_NEAR(rel(0, 3), 0.0, 1e-9);
   EXPECT_NEAR(rel(1, 3), 0.0, 1e-9);
   EXPECT_NEAR(rel(2, 3), 0.045, 1e-9);
@@ -108,7 +124,7 @@ TEST_F(PlannerTest, IkRoundTrip) {
   const Eigen::VectorXd q_true = (Eigen::VectorXd(6) << 0.3, 0.4, -1.2, -0.6, 0.2, 0.5).finished();
   ASSERT_FALSE(planner_->hasCollisions(q_true));
   const Eigen::Matrix4d target = planner_->fk(q_true);
-  const std::optional<Eigen::VectorXd> q = planner_->ik(target, kHomeQ);
+  const std::optional<Eigen::VectorXd> q = planner_->ik(target, home_q_);
   ASSERT_TRUE(q.has_value());
   const auto [pos_err, rot_err] = roboplan::poseError(planner_->fk(*q), target);
   EXPECT_LT(pos_err, 1e-3);
@@ -118,11 +134,11 @@ TEST_F(PlannerTest, IkRoundTrip) {
 TEST_F(PlannerTest, BlockReachableFromHome) {
   // The reachability gate for the table/block constants.
   const tl::expected<ArmPlanner::PlanToAny, std::string> found =
-      planner_->planToAny(kHomeQ, pregrasps(grasps_));
+      planner_->planToAny(home_q_, pregrasps(grasps_));
   ASSERT_TRUE(found.has_value()) << found.error();
   const auto& [path, index] = *found;
   ASSERT_FALSE(path.empty());
-  EXPECT_TRUE(path.front().isApprox(kHomeQ, 1e-7));
+  EXPECT_TRUE(path.front().isApprox(home_q_, 1e-7));
   const auto [pos_err, rot_err] =
       roboplan::poseError(planner_->fk(path.back()), offset(grasps_[index], kPreOffset));
   std::ignore = rot_err;
@@ -134,7 +150,7 @@ TEST_F(PlannerTest, BlockReachableFromHome) {
 
 TEST_F(PlannerTest, LinearGraspAndRetreat) {
   const tl::expected<ArmPlanner::PlanToAny, std::string> found =
-      planner_->planToAny(kHomeQ, pregrasps(grasps_));
+      planner_->planToAny(home_q_, pregrasps(grasps_));
   ASSERT_TRUE(found.has_value()) << found.error();
   const auto& [path, index] = *found;
   const tl::expected<std::vector<Eigen::VectorXd>, std::string> down =
@@ -161,9 +177,9 @@ TEST_F(PlannerTest, LinearGraspAndRetreat) {
 }
 
 TEST(TrajectoryTest, JointTrajectoryTiming) {
-  const Eigen::VectorXd home = kHomeQ;
+  const Eigen::VectorXd start = Eigen::VectorXd::Zero(6);
   const std::vector<Eigen::VectorXd> path = {
-      home, (home.array() + 0.4).matrix(), (home.array() + 0.41).matrix(), home};
+      start, (start.array() + 0.4).matrix(), (start.array() + 0.41).matrix(), start};
   const trajectory_msgs::msg::JointTrajectory traj = toJointTrajectory(path, 0.8);
   EXPECT_EQ(traj.joint_names, kArmJoints);
   ASSERT_EQ(traj.points.size(), 3U);
@@ -175,7 +191,7 @@ TEST(TrajectoryTest, JointTrajectoryTiming) {
   const std::vector<double>& last = traj.points.back().positions;
   ASSERT_EQ(last.size(), 6U);
   for (std::size_t j = 0; j < last.size(); ++j) {
-    EXPECT_NEAR(last[j], home(static_cast<Eigen::Index>(j)), 1e-12);
+    EXPECT_NEAR(last[j], start(static_cast<Eigen::Index>(j)), 1e-12);
   }
 }
 
@@ -197,7 +213,7 @@ TEST(TrajectoryTest, JointTrajectoryTiming) {
 TEST_F(PlannerTest, LookPose) {
   // How kLookQ was found: IK for the optical frame (through its fixed offset from the TCP).
   const Eigen::Matrix4d cam_in_tcp =
-      planner_->fk(kHomeQ).inverse() * planner_->fk(kHomeQ, kCameraFrame);
+      planner_->fk(home_q_).inverse() * planner_->fk(home_q_, kCameraFrame);
   const Eigen::Matrix4d goal = cameraLookingAt(kBlockStart, 0.2, 65.0);
   const std::optional<Eigen::VectorXd> q = planner_->ik(goal * cam_in_tcp.inverse(), kLookQ);
   ASSERT_TRUE(q.has_value());
@@ -207,7 +223,7 @@ TEST_F(PlannerTest, LookPose) {
   // The hardcoded kLookQ is collision free, reachable from home and sees the work area.
   EXPECT_FALSE(planner_->hasCollisions(kLookQ));
   const tl::expected<std::vector<Eigen::VectorXd>, std::string> plan =
-      planner_->planJoint(kHomeQ, kLookQ);
+      planner_->planJoint(home_q_, kLookQ);
   EXPECT_TRUE(plan.has_value()) << plan.error();
   const Eigen::Matrix4d world_to_cam = planner_->fk(kLookQ, kCameraFrame).inverse();
   // The MuJoCo camera: fovy 65 deg, 640x400.
@@ -238,14 +254,14 @@ TEST_F(PlannerTest, LookPose) {
 
 TEST_F(PlannerTest, PlansFromJustPastAJointLimit) {
   // A measured joint state can overshoot a limit slightly; planning must still start.
-  Eigen::VectorXd q = kHomeQ;
+  Eigen::VectorXd q = home_q_;
   q(5) = std::numbers::pi + 1e-4;  // The joint 6 limit is 3.14159.
   EXPECT_FALSE(planner_->hasCollisions(q));
   EXPECT_NEAR(planner_->clamp(q)(5), 3.14159, 1e-7);
   const tl::expected<std::vector<Eigen::VectorXd>, std::string> path =
-      planner_->planJoint(q, kHomeQ);
+      planner_->planJoint(q, home_q_);
   ASSERT_TRUE(path.has_value()) << path.error();
-  EXPECT_TRUE(path->back().isApprox(kHomeQ, 1e-9));
+  EXPECT_TRUE(path->back().isApprox(home_q_, 1e-9));
 }
 
 }  // namespace

@@ -1,7 +1,8 @@
 #pragma once
 
 /// @file
-/// Shared constants for emma's manipulation, all in metres / radians and `base_link`.
+/// Shared constants for emma's manipulation, all in metres / radians and `base_link`. Values
+/// tuned on the robot (home pose, table) are in config/manipulation.yaml instead; see config.hpp.
 
 #include <array>
 #include <numbers>
@@ -20,11 +21,6 @@ inline const std::vector<std::string> kArmJoints = {
     "joint5_to_joint4", "joint6_to_joint5", "joint6output_to_joint6",
 };
 
-/// Arm folded back over the base; matches the ros2_control initial_value in emma.urdf.xacro.
-/// The wrist is tipped up (joint 4 at 0.3, not -0.495) so the wrist camera clears the arm.
-inline const Eigen::VectorXd kHomeQ =
-    (Eigen::VectorXd(6) << 0.0, 2.259, -2.505, 0.3, 0.0, 0.0).finished();
-
 /// Wrist camera looking at kBlockStart from 0.2 m, its optical axis 65 deg below horizontal (at
 /// 45 deg the camera would sit almost over the arm base, out of reach). kPlaceXyz and a block a
 /// few cm off kBlockStart stay in view. Found by IK in test_planner.cpp (LookPose), which
@@ -35,10 +31,6 @@ inline const Eigen::VectorXd kLookQ =
 inline constexpr std::string_view kBaseFrame = "base_link";
 inline constexpr std::string_view kCameraFrame = "wrist_camera_color_optical_frame";
 inline constexpr std::string_view kTcpFrame = "tcp";
-
-/// Table in front of the AGV: box centre and half-size. Top at z = 0.15, x from 0.20 to 0.40.
-inline const Eigen::Vector3d kTableCenter{0.30, 0.0, 0.075};
-inline const Eigen::Vector3d kTableHalfSize{0.10, 0.15, 0.075};
 
 inline constexpr double kBlockSize = 0.010;
 inline const Eigen::Vector3d kBlockStart{0.25, 0.0, 0.155};

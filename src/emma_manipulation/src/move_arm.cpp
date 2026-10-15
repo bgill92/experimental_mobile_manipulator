@@ -22,6 +22,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_prefix.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -30,6 +31,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <tl/expected.hpp>
 
+#include "emma_manipulation/config.hpp"
 #include "emma_manipulation/constants.hpp"
 #include "emma_manipulation/planner.hpp"
 #include "emma_manipulation/trajectory.hpp"
@@ -56,12 +58,15 @@ Plan and run one arm motion from the command line.
 
 Poses are the TCP in base_link: x y z in metres, then optional roll pitch yaw in radians
 (fixed axes, applied x then y then z; default 0 0 0). --pose plans around obstacles with
-RRT; --linear moves in a short straight line from the current pose. The table from
-emma_manipulation/constants.hpp is in the planning scene unless --no-table is given.
+RRT; --linear moves in a short straight line from the current pose. The table is in the
+planning scene unless --no-table is given.
+
+The home pose and table come from emma_manipulation's config/manipulation.yaml, read at
+startup. Override them with --ros-args -p NAME:=VALUE or --params-file FILE.
 
 options:
   -h, --help            show this help message and exit
-  --home                go to HOME_Q
+  --home                go to home_q
   --joints Q Q Q Q Q Q  arm joint positions in rad
   --pose V [V ...]      TCP pose x y z [roll pitch yaw], planned with RRT
   --linear V [V ...]    TCP pose x y z [roll pitch yaw], straight-line move
@@ -198,6 +203,8 @@ class MoveArm {
 
   [[nodiscard]] rclcpp::Logger logger() const { return node_->get_logger(); }
 
+  [[nodiscard]] rclcpp::Node& node() { return *node_; }
+
   /// Wall-clock waits: with use_sim_time the node clock stands still until /clock arrives.
   [[nodiscard]] tl::expected<std::string, std::string> waitForUrdf(
       const std::chrono::seconds timeout = 10s) {
@@ -267,6 +274,13 @@ class MoveArm {
 
 [[nodiscard]] int run(MoveArm& move_arm, const Args& args) {
   const rclcpp::Logger log = move_arm.logger();
+  // Before waiting on the sim, so a bad YAML fails at once.
+  const tl::expected<emma_manipulation::ArmConfig, std::string> config =
+      emma_manipulation::loadArmConfig(move_arm.node());
+  if (!config.has_value()) {
+    RCLCPP_ERROR(log, "%s", config.error().c_str());
+    return 1;
+  }
   const tl::expected<std::string, std::string> urdf = move_arm.waitForUrdf();
   if (!urdf.has_value()) {
     RCLCPP_ERROR(log, "%s", urdf.error().c_str());
@@ -275,8 +289,8 @@ class MoveArm {
   emma_manipulation::ArmPlanner planner(*urdf);
   if (!args.no_table) {
     Eigen::Matrix4d table = Eigen::Matrix4d::Identity();
-    table.topRightCorner<3, 1>() = emma_manipulation::kTableCenter;
-    planner.addBox("table", 2.0 * emma_manipulation::kTableHalfSize, table,
+    table.topRightCorner<3, 1>() = config->table_center;
+    planner.addBox("table", config->table_size, table,
                    {0.55, 0.4, 0.25, 1.0});
   }
   const tl::expected<Eigen::VectorXd, std::string> q_start = move_arm.freshArmPositions();
@@ -290,7 +304,7 @@ class MoveArm {
   if (args.mode == Mode::kHome || args.mode == Mode::kJoints) {
     const Eigen::VectorXd q_goal =
         args.mode == Mode::kHome
-            ? emma_manipulation::kHomeQ
+            ? config->home_q
             : Eigen::Map<const Eigen::VectorXd>(args.values.data(),
                                                 static_cast<Eigen::Index>(args.values.size()));
     target = planner.fk(q_goal);
@@ -348,7 +362,15 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  rclcpp::init(argc, argv);
+  // The default parameters file goes first, so a --params-file or -p on the command line
+  // overrides it.
+  const std::string params =
+      (ament_index_cpp::get_package_share_path("emma_manipulation") / "config/manipulation.yaml")
+          .string();
+  std::vector<const char*> ros_argv = {argv[0], "--ros-args", "--params-file", params.c_str(),
+                                       "--"};
+  ros_argv.insert(ros_argv.end(), argv + 1, argv + argc);
+  rclcpp::init(static_cast<int>(ros_argv.size()), ros_argv.data());
   int code = 1;
   {
     MoveArm move_arm;

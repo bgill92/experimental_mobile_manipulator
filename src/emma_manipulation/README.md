@@ -10,7 +10,9 @@ that runs a plan on the simulated (or real) `arm_controller`.
 
 | Path | What it is |
 |---|---|
-| `include/emma_manipulation/constants.hpp` | Arm joint names (`kArmJoints`), `kHomeQ`, `kLookQ`, frames, table/block geometry, grasp tilts, gripper positions. |
+| `include/emma_manipulation/constants.hpp` | Arm joint names (`kArmJoints`), `kLookQ`, frames, block geometry, grasp tilts, gripper positions. |
+| `config/manipulation.yaml` | Values read at startup as ROS parameters, so changing them needs no rebuild: `home_q`, `table_center`, `table_size`. |
+| `include/emma_manipulation/config.hpp`, `src/config.cpp` | `loadArmConfig`: declares and reads those parameters on a node. |
 | `include/emma_manipulation/planner.hpp`, `src/planner.cpp` | `ArmPlanner`, `rewriteUrdfForPlanning`, `meshPackagePaths`. |
 | `include/emma_manipulation/grasp.hpp`, `src/grasp.cpp` | `graspCandidates`, `offset`. Pure Eigen. |
 | `include/emma_manipulation/trajectory.hpp`, `src/trajectory.cpp` | `toJointTrajectory`. |
@@ -32,13 +34,25 @@ pixi run bash -c "source install/setup.bash && ros2 run emma_manipulation move_a
 
 | Option | Effect |
 |---|---|
-| `--home` | Plan (RRT) to `kHomeQ`, the folded start pose. |
+| `--home` | Plan (RRT) to `home_q`, the folded start pose. |
 | `--joints q1 … q6` | Plan (RRT) to arm joint positions in rad, in `kArmJoints` order. |
 | `--pose x y z [roll pitch yaw]` | Plan (IK + RRT) to a TCP pose in `base_link`. Angles are fixed-axis x, y, z in rad. `0 3.1416 0` points the gripper straight down. |
 | `--linear x y z [roll pitch yaw]` | Short straight move to a TCP pose (IK seeded at the current state, then a joint-space interpolation). |
 | `--no-table` | Leave the table box out of the planning scene. |
 | `--v-max` | Max joint speed for the trajectory timing, rad/s (default 0.8). |
 | `-h`, `--help` | Print the usage text. |
+
+It loads `config/manipulation.yaml` from the package's share directory (with `--symlink-install`
+that is the source file, so edits apply on the next run). Override single values or the whole
+file after the motion arguments:
+
+```bash
+ros2 run emma_manipulation move_arm --home --ros-args -p home_q:="[0.0, 2.259, -2.505, 0.3, 0.0, 0.0]"
+ros2 run emma_manipulation move_arm --home --ros-args --params-file my_robot.yaml
+```
+
+Every value must be set and every number written with a decimal point (`0.0`, not `0`); a missing
+or malformed one fails before anything moves.
 
 It reads `/robot_description` (latched) and `/joint_states`, sends the trajectory to
 `/arm_controller/follow_joint_trajectory`, waits for the result, and logs the reached TCP pose
@@ -119,12 +133,12 @@ move to it), and roboplan's RRT rejects such a start outright.
 
 | Constant | Value | What it is |
 |---|---|---|
-| `kHomeQ` | `[0, 2.259, -2.505, 0.3, 0, 0]` | Folded start pose, equal to the ros2_control `initial_value`s. Joint 4 is at 0.3 rather than -0.495 so the wrist camera clears the upper arm. |
+| `home_q` (YAML) | `[0, 2.259, -2.505, 0.3, 0, 0]` | Folded start pose, equal to the ros2_control `initial_value`s. Joint 4 is at 0.3 rather than -0.495 so the wrist camera clears the upper arm. |
 | `kLookQ` | `[0.862, 0.771, -1.533, -0.695, -0.133, 0.855]` | Wrist camera 0.2 m from `kBlockStart`, optical axis 65° below horizontal. `kPlaceXyz` and a block a few cm off `kBlockStart` stay in view. |
 
 `kLookQ` came from IK for the optical frame (through its fixed offset from the TCP) and is
 hardcoded; the `LookPose` test re-solves it, prints the solution, and checks that the hardcoded
-value is collision free, reachable from `kHomeQ` and has the block on the optical axis. At 45°
+value is collision free, reachable from `home_q` and has the block on the optical axis. At 45°
 from 0.2 m the camera would sit almost over the arm base, and IK found no solution at 45° or 55°
 from 0.17–0.23 m. 60–70° all work; 65° is in the middle. The camera is on the gripper's side, so
 joint 1 turns 0.86 rad to bring it over the block.
@@ -146,7 +160,7 @@ roboplan builds its collision model from the URDF, with three planning-side chan
 Disabled pairs: all parent-child links (`allowAdjacentLinkCollisions`), and
 `gripper_left`/`gripper_right`/`wrist_camera_link` against `joint6`/`joint6_flange` (pairs naming
 a link the URDF lacks, such as the camera with `camera:=none`, are skipped). No SRDF; upstream's
-`firefighter.srdf` names the wrong robot and has no gripper. `kHomeQ` is collision free without
+`firefighter.srdf` names the wrong robot and has no gripper. `home_q` is collision free without
 further exceptions.
 
 Attached objects hang off `joint6_flange`, not `tcp`: roboplan places added geometry relative to
@@ -161,8 +175,10 @@ box is excluded from collisions with `gripper_base`, `gripper_left` and `gripper
   turn and returns the first success.
 - **Straight-line moves are joint interpolations**: over the few centimetres they are used for
   (pregrasp ↔ grasp) the TCP stays close to the line, but nothing enforces it.
-- **Table and block constants** are design choices for the sim scene, not measurements. The
-  reachability test (`BlockReachableFromHome`) is where to tune them.
+- **Table and block values** are design choices for the sim scene, not measurements. The table
+  is in `config/manipulation.yaml`, the block in `constants.hpp`. `test_planner` reads the source
+  YAML, so rerunning `pixi run test` after an edit checks the new values (the reachability test,
+  `BlockReachableFromHome`, is the one that matters) without a rebuild.
 - **Test URDF**: `test_planner` reads `emma.urdf`, expanded from `emma_description`'s xacro into
   the build directory at build time, so `emma_description`, `mycobot_description` and
   `myagv_description` must be built first (they are `exec_depend`s, which colcon honours).

@@ -123,8 +123,8 @@ submodule is not edited. `emma.urdf.xacro` adds what it lacks: the mass through 
   origin so that the optical frame, and the sim camera on it, sit at the front face. One camera
   stands in for the aligned colour and depth streams; `emma_simulation` gives it a 65° vertical
   field of view at 640 × 400 (about 91° horizontally, between the 94° colour and 88° depth specs).
-- **Start pose**: the arm starts folded with joint 4 at 0.3 rad (`kHomeQ` in
-  `emma_manipulation`). With the camera on, the earlier -0.495 rad puts the camera inside the
+- **Start pose**: the arm starts folded with joint 4 at 0.3 rad (`home_q` in
+  `emma_manipulation`'s `config/manipulation.yaml`). With the camera on, the earlier -0.495 rad puts the camera inside the
   upper arm.
 - **Effort limits**: all joints use upstream's 1000, the wheels included. That is unrealistic
   but harmless; the simulated wheel motors clamp torque on their own.

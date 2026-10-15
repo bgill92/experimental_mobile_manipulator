@@ -21,6 +21,7 @@ find_package(tinyxml2 REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/config.cpp
   src/grasp.cpp
   src/planner.cpp
   src/trajectory.cpp
@@ -39,6 +40,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   tinyxml2::tinyxml2
   Eigen3::Eigen
   ament_index_cpp::ament_index_cpp
+  rclcpp::rclcpp
   ${builtin_interfaces_TARGETS}
   ${sensor_msgs_TARGETS}
   ${trajectory_msgs_TARGETS}
@@ -47,13 +49,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 add_executable(move_arm src/move_arm.cpp)
 target_link_libraries(move_arm
   ${PROJECT_NAME}
-  rclcpp::rclcpp
   rclcpp_action::rclcpp_action
   ${control_msgs_TARGETS}
   ${std_msgs_TARGETS}
 )
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
@@ -68,6 +70,7 @@ ament_export_dependencies(
   ament_index_cpp
   builtin_interfaces
   Eigen3
+  rclcpp
   roboplan_core
   roboplan_rrt
   roboplan_simple_ik
@@ -107,6 +110,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_planner ${PROJECT_NAME})
   target_compile_definitions(test_planner PRIVATE
     EMMA_TEST_URDF="${XACRO_OUTPUT_FILE}"
+    # The source copy, so editing the YAML and rerunning the tests needs no rebuild.
+    EMMA_TEST_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/manipulation.yaml"
   )
 endif()
 
