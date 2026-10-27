@@ -25,6 +25,22 @@ class Scene;
 
 namespace emma_behaviors {
 
+/// @brief Points `xml`'s `package://` COLLADA meshes that Rerun's viewer mishandles at patched
+/// copies under `out_dir`.
+///
+/// Six of the upstream myCobot meshes (same exporter) trip Rerun up in two ways:
+/// - Texture coordinates named `U`/`V` instead of COLLADA's `S`/`T`: Rerun's COLLADA loader
+///   (dae-parser 0.11, still in Rerun 0.40) panics, killing the viewer.
+/// - `<up_axis>Y_UP</up_axis>` on geometry that is really Z-up in the link frame: RViz and the
+///   planner ignore the tag, Rerun applies it and turns each link 90 degrees.
+/// Those meshes are copied with the names and the up axis fixed, and their URIs replaced by the
+/// copies' absolute paths; every other mesh is left alone.
+/// @param package_paths As for Viz::logUrdf.
+/// @return `xml` with the affected mesh URIs replaced.
+[[nodiscard]] std::string patchMeshesForRerun(
+    std::string xml, const std::vector<std::filesystem::path>& package_paths,
+    const std::filesystem::path& out_dir);
+
 /// @brief Scene and event logging to one Rerun recording. Every method except logUrdf is
 /// thread-safe (Rerun recording streams are).
 class Viz {
@@ -47,7 +63,8 @@ class Viz {
   /// @brief Logs the robot URDF at `world/robot`.
   ///
   /// The URDF is written to a temporary `.urdf` file (the extension selects Rerun's loader), and
-  /// `ROS_PACKAGE_PATH` is set to `package_paths` so its `package://` meshes resolve.
+  /// `ROS_PACKAGE_PATH` is set to `package_paths` so its `package://` meshes resolve. Meshes the
+  /// viewer cannot load are swapped for patched temporary copies (see patchMeshesForRerun).
   /// @warning Not thread-safe: it calls setenv and writes a fixed temporary path. Call it at
   /// startup, before any other thread logs.
   void logUrdf(const std::string& xml,

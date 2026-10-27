@@ -129,6 +129,13 @@ ignores the `<unit>` tag (it applies `<up_axis>` only; see `re_renderer/src/impo
 as coal and assimp do in the planner, so the gripper (millimetres) and myAGV (inches) meshes need
 the URDF `scale` the rewrite adds. Without it they would show 1000× and 39× too large.
 
+Six of the upstream myCobot meshes need patching for Rerun. They name texture coordinates `U`/`V`
+instead of `S`/`T`, on which Rerun's COLLADA parser (dae-parser 0.11, still in Rerun 0.40) panics
+and takes the viewer down. They also say `<up_axis>Y_UP</up_axis>` although the geometry is Z-up in
+the link frame; RViz and the planner ignore the tag, but Rerun applies it and turns each link 90°.
+`Viz::logUrdf` points those meshes at fixed copies in `$TMPDIR/emma_rerun_meshes`
+(`patchMeshesForRerun`); RViz, MuJoCo and the planner keep the originals.
+
 Timelines: `tick` (one per tree tick) and `time` (wall seconds since the loop started). Events
 logged from offloaded planning threads carry only Rerun's `log_time`.
 

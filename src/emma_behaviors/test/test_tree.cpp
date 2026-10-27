@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <numbers>
@@ -98,6 +99,32 @@ TEST(PoseHelpers, RoundTrip) {
   EXPECT_NEAR(yawOf(makePose({0.0, 0.0, 0.0}, yaw, "base_link")), yaw, 1e-12);
   const Eigen::Matrix3d r = tform.topLeftCorner<3, 3>();
   EXPECT_TRUE((r * r.transpose()).isIdentity(1e-12));
+}
+
+TEST(Viz, PatchesMeshesRerunCannotLoad) {
+  const std::filesystem::path out_dir =
+      std::filesystem::temp_directory_path() / "emma_test_rerun_meshes";
+  std::filesystem::remove_all(out_dir);
+  const std::string xml = patchMeshesForRerun(
+      readFile(EMMA_TEST_URDF), emma_manipulation::meshPackagePaths(), out_dir);
+
+  // joint1.dae names its texture coordinates U/V and says Y_UP; joint5.dae and the gripper meshes
+  // do neither.
+  const std::filesystem::path joint1 =
+      out_dir / "mycobot_description" / "urdf" / "mycobot_280_m5" / "joint1.dae";
+  EXPECT_NE(xml.find(joint1.string()), std::string::npos);
+  EXPECT_EQ(xml.find("package://mycobot_description/urdf/mycobot_280_m5/joint1.dae"),
+            std::string::npos);
+  EXPECT_NE(xml.find("package://mycobot_description/urdf/mycobot_280_m5/joint5.dae"),
+            std::string::npos);
+  EXPECT_NE(xml.find("package://emma_description/meshes/parallel_gripper/gripper_base.dae"),
+            std::string::npos);
+
+  const std::string patched = readFile(joint1.string());
+  EXPECT_EQ(patched.find(R"(name="U" type="float")"), std::string::npos);
+  EXPECT_NE(patched.find(R"(name="S" type="float")"), std::string::npos);
+  EXPECT_NE(patched.find(R"(name="T" type="float")"), std::string::npos);
+  EXPECT_NE(patched.find("<up_axis>Z_UP</up_axis>"), std::string::npos);
 }
 
 TEST(Tree, HasTheExpectedNodes) {

@@ -10,6 +10,8 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -28,6 +30,17 @@ namespace {
 
 constexpr std::string_view kAppId = "emma_pick_and_place";
 constexpr std::string_view kBaseLink = "base_link";
+
+constexpr std::string_view kUParam = R"(name="U" type="float")";
+constexpr std::string_view kVParam = R"(name="V" type="float")";
+constexpr std::string_view kYUp = "<up_axis>Y_UP</up_axis>";
+
+void replaceAll(std::string& text, std::string_view from, std::string_view to) {
+  for (std::size_t pos = text.find(from); pos != std::string::npos;
+       pos = text.find(from, pos + to.size())) {
+    text.replace(pos, from.size(), to);
+  }
+}
 
 [[nodiscard]] rerun::Color toColor(const Eigen::Vector4d& rgba) {
   const auto channel = [](double v) {
@@ -85,13 +98,48 @@ Viz::~Viz() = default;
 Viz::Viz(Viz&&) noexcept = default;
 Viz& Viz::operator=(Viz&&) noexcept = default;
 
+std::string patchMeshesForRerun(std::string xml,
+                                const std::vector<std::filesystem::path>& package_paths,
+                                const std::filesystem::path& out_dir) {
+  // URI -> (package, path inside the package's share directory).
+  static const std::regex kDaeUri(R"(package://([^/"]+)/([^"]+\.dae))");
+  std::map<std::string, std::pair<std::string, std::string>> meshes;
+  for (std::sregex_iterator it(xml.begin(), xml.end(), kDaeUri), end; it != end; ++it) {
+    meshes.try_emplace((*it)[0].str(), (*it)[1].str(), (*it)[2].str());
+  }
+  for (const auto& [uri, mesh] : meshes) {
+    const auto& [package, relative] = mesh;
+    for (const std::filesystem::path& root : package_paths) {
+      const std::filesystem::path source = root / package / relative;
+      if (!std::filesystem::exists(source)) {
+        continue;
+      }
+      std::ostringstream buffer;
+      buffer << std::ifstream(source).rdbuf();
+      std::string dae = buffer.str();
+      if (dae.find(kUParam) != std::string::npos || dae.find(kYUp) != std::string::npos) {
+        replaceAll(dae, kUParam, R"(name="S" type="float")");
+        replaceAll(dae, kVParam, R"(name="T" type="float")");
+        replaceAll(dae, kYUp, "<up_axis>Z_UP</up_axis>");
+        const std::filesystem::path patched = out_dir / package / relative;
+        std::filesystem::create_directories(patched.parent_path());
+        std::ofstream(patched) << dae;
+        replaceAll(xml, uri, patched.string());
+      }
+      break;
+    }
+  }
+  return xml;
+}
+
 void Viz::logUrdf(const std::string& xml,
                   const std::vector<std::filesystem::path>& package_paths) const {
   const std::filesystem::path path =
       std::filesystem::temp_directory_path() / "emma_pick_and_place.urdf";
   {
     std::ofstream file(path);
-    file << xml;
+    file << patchMeshesForRerun(xml, package_paths,
+                                std::filesystem::temp_directory_path() / "emma_rerun_meshes");
   }
   std::string joined;
   for (const std::filesystem::path& package_path : package_paths) {
