@@ -16,6 +16,8 @@
 #include <beet/beet.hpp>
 #include <beet/observe.hpp>
 #include <Eigen/Core>
+#include <ament_index_cpp/get_package_share_path.hpp>
+#include <emma_manipulation/config.hpp>
 #include <emma_manipulation/constants.hpp>
 #include <emma_manipulation/planner.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -89,6 +91,13 @@ void printTree(const beet::StatusTable<Tree>& table) {
 [[nodiscard]] int run(const Args& args) {
   const auto node = std::make_shared<rclcpp::Node>("pick_and_place");
   const rclcpp::Logger log = node->get_logger();
+  // Before waiting on the sim, so a bad YAML fails at once.
+  const tl::expected<emma_manipulation::ArmConfig, std::string> config =
+      emma_manipulation::loadArmConfig(*node);
+  if (!config.has_value()) {
+    RCLCPP_ERROR(log, "%s", config.error().c_str());
+    return 1;
+  }
 
   const tl::expected<std::string, std::string> urdf = waitForUrdf(*node, std::chrono::seconds(30));
   if (!urdf.has_value()) {
@@ -96,8 +105,8 @@ void printTree(const beet::StatusTable<Tree>& table) {
     return 1;
   }
   const auto planner = std::make_shared<emma_manipulation::ArmPlanner>(*urdf);
-  const Eigen::Vector3d table_size = 2.0 * emma_manipulation::kTableHalfSize;
-  const Eigen::Matrix4d table_tform = translation(emma_manipulation::kTableCenter);
+  const Eigen::Vector3d table_size = config->table_size;
+  const Eigen::Matrix4d table_tform = translation(config->table_center);
   const Eigen::Vector4d table_rgba(0.55, 0.4, 0.25, 1.0);
   planner->addBox("table", table_size, table_tform, table_rgba);
 
@@ -118,7 +127,8 @@ void printTree(const beet::StatusTable<Tree>& table) {
   viz->logBox("table", table_size, table_tform, table_rgba);
 
   RobotLogger robot(*viz, planner->scene());
-  const Cell cell{*io, planner, viz};
+  const Cell cell{*io, planner, viz,
+                 std::make_shared<const emma_manipulation::ArmConfig>(*config)};
   const rerun_tree::GraphLogger<Tree> graph(viz->stream(), "tree");
   beet::StatusTable<Tree> table;
   beet::Runner runner{makeTree(cell), cell, table.listeners()};
@@ -173,7 +183,15 @@ int main(int argc, char** argv) {
     std::cerr << args.error() << "\n" << emma_behaviors::kUsage;
     return 2;
   }
-  rclcpp::init(argc, argv);
+  // The default parameters file goes first, so a --params-file or -p on the command line
+  // overrides it.
+  const std::string params =
+      (ament_index_cpp::get_package_share_path("emma_manipulation") / "config/manipulation.yaml")
+          .string();
+  std::vector<const char*> ros_argv = {argv[0], "--ros-args", "--params-file", params.c_str(),
+                                       "--"};
+  ros_argv.insert(ros_argv.end(), argv + 1, argv + argc);
+  rclcpp::init(static_cast<int>(ros_argv.size()), ros_argv.data());
   const int code = emma_behaviors::run(*args);
   rclcpp::shutdown();
   return code;

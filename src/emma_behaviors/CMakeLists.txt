@@ -88,6 +88,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_tree ${PROJECT_NAME}_core)
   target_compile_definitions(test_tree PRIVATE
     EMMA_TEST_URDF="${XACRO_OUTPUT_FILE}"
+    # emma_manipulation's installed copy of the YAML the robot uses.
+    EMMA_TEST_CONFIG="${emma_manipulation_DIR}/../config/manipulation.yaml"
   )
 endif()
 

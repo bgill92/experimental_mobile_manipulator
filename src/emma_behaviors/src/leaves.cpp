@@ -318,7 +318,7 @@ Grasps computeGrasps(Looked looked) {
   const double yaw = yawOf(looked.block);
   // The arm base is fixed in base_link, so any configuration gives its position.
   const Eigen::Vector2d arm_base_xy =
-      cell.planner->fk(emma_manipulation::kHomeQ, "g_base").block<2, 1>(0, 3);
+      cell.planner->fk(cell.config->home_q, "g_base").block<2, 1>(0, 3);
 
   Grasps grasps{cell, emma_manipulation::graspCandidates(block_xyz, yaw, arm_base_xy), {}, {}, {}};
   const Eigen::Vector3d shift = kPlaceXyz - block_xyz;

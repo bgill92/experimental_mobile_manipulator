@@ -17,6 +17,7 @@
 
 #include <beet/beet.hpp>
 #include <Eigen/Core>
+#include <emma_manipulation/config.hpp>
 #include <emma_manipulation/constants.hpp>
 #include <emma_manipulation/planner.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -67,11 +68,12 @@ struct GaveUp {};
 
 // Edge types.
 
-/// Shared resources. Three shared_ptrs, so the copies `retry` and `fallback` make are cheap.
+/// Shared resources. Four shared_ptrs, so the copies `retry` and `fallback` make are cheap.
 struct Cell {
   std::shared_ptr<Io> io;
   std::shared_ptr<emma_manipulation::ArmPlanner> planner;
   std::shared_ptr<Viz> viz;
+  std::shared_ptr<const emma_manipulation::ArmConfig> config;
 };
 
 /// A fresh block detection, in `base_link`.
@@ -165,7 +167,9 @@ template <class S>
 }
 template <class S>
 [[nodiscard]] Result<Planned<S>, NoPlan> planHome(S state) {
-  return planJoint(std::move(state), emma_manipulation::kHomeQ, "home");
+  // Copied first: argument order is unspecified, so state could be moved from before it is read.
+  const Eigen::VectorXd home_q = cellOf(state).config->home_q;
+  return planJoint(std::move(state), home_q, "home");
 }
 
 /// RRT to the first reachable pregrasp; the reached candidate becomes the chosen grasp.

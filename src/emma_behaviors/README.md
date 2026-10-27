@@ -50,13 +50,17 @@ writes the recording to that file and opens no window
 (`ros2 run emma_behaviors pick_and_place --save run.rrd --ros-args -p use_sim_time:=true`). If
 the viewer cannot be spawned it prints a warning and runs without one.
 
+The home pose and table come from `emma_manipulation`'s `config/manipulation.yaml`, read at
+startup as in `move_arm`; override them with `--ros-args -p NAME:=VALUE` or `--params-file FILE`.
+`test_tree` reads the same file.
+
 `ros2 launch` does not pass a node's exit code through, so `pick-check` starts this launch with
 `tree:=false` in the background (log in `log/pick_check_sim.log`), runs `pick_and_place --save
 log/pick_check.rrd` in the foreground under a timeout, and exits with the tree's result.
 
-Exit codes of `pick_and_place`: 0 when the tree succeeds, 1 when it fails (`GaveUp`), cannot get
-`/robot_description` within 30 s or an action server within 10 s, or is interrupted; 2 for an
-unknown command-line argument. When it finishes it prints the final tree, one node per line
+Exit codes of `pick_and_place`: 0 when the tree succeeds, 1 when it fails (`GaveUp`), finds a
+missing or bad entry in `manipulation.yaml`, cannot get `/robot_description` within 30 s or an
+action server within 10 s, or is interrupted; 2 for an unknown command-line argument. When it finishes it prints the final tree, one node per line
 indented by depth, with each node's status (unnamed nodes show their kind, e.g. `sequence`, and
 the leaf under `detect` shows as `leaf`).
 

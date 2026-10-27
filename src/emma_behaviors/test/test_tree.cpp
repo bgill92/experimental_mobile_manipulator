@@ -19,12 +19,14 @@
 #include <beet/observe.hpp>
 #include <Eigen/Core>
 #include <gtest/gtest.h>
+#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
 #include "emma_behaviors/leaves.hpp"
 #include "emma_behaviors/ros_io.hpp"
 #include "emma_behaviors/tree.hpp"
 #include "emma_behaviors/viz.hpp"
+#include "emma_manipulation/config.hpp"
 #include "emma_manipulation/constants.hpp"
 #include "emma_manipulation/planner.hpp"
 
@@ -33,7 +35,6 @@ namespace {
 
 using emma_manipulation::kArmJoints;
 using emma_manipulation::kBlockStart;
-using emma_manipulation::kHomeQ;
 using emma_manipulation::kPlaceXyz;
 using emma_manipulation::kPreOffset;
 
@@ -62,22 +63,33 @@ static_assert(std::is_invocable_v<decltype(&planLinear), Chosen, Target>);
 class TreeTest : public testing::Test {
  protected:
   static void SetUpTestSuite() {
+    // The YAML the robot uses, so the tests plan with its home pose and table.
+    rclcpp::init(0, nullptr);
+    const rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>(
+        "test_tree",
+        rclcpp::NodeOptions().arguments({"--ros-args", "--params-file", EMMA_TEST_CONFIG}));
+    const tl::expected<emma_manipulation::ArmConfig, std::string> config =
+        emma_manipulation::loadArmConfig(*node);
+    ASSERT_TRUE(config.has_value()) << config.error();
     const std::string urdf = readFile(EMMA_TEST_URDF);
     ASSERT_FALSE(urdf.empty()) << "cannot read " << EMMA_TEST_URDF;
     auto planner = std::make_shared<emma_manipulation::ArmPlanner>(
         urdf, emma_manipulation::ArmPlannerOptions{.seed = 7U});
-    planner->addBox("table", 2.0 * emma_manipulation::kTableHalfSize,
-                    translation(emma_manipulation::kTableCenter));
+    planner->addBox("table", config->table_size, translation(config->table_center));
     cell_ = std::make_unique<Cell>(
-        Cell{std::make_shared<Io>(), std::move(planner), std::make_shared<Viz>(Viz::disabled())});
+        Cell{std::make_shared<Io>(), std::move(planner), std::make_shared<Viz>(Viz::disabled()),
+             std::make_shared<const emma_manipulation::ArmConfig>(*config)});
   }
 
-  static void TearDownTestSuite() { cell_.reset(); }
+  static void TearDownTestSuite() {
+    cell_.reset();
+    rclcpp::shutdown();
+  }
 
   void SetUp() override {
     // A failed SetUpTestSuite leaves no cell; fail each test cleanly instead of crashing.
     ASSERT_NE(cell_, nullptr) << "fixture not built, see the first failure";
-    setJoints(kHomeQ);
+    setJoints(cell_->config->home_q);
   }
 
   static void setJoints(const Eigen::VectorXd& q) { storeJointState(*cell_->io, armState(q)); }
