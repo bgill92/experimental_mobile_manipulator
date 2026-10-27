@@ -36,6 +36,7 @@ def generate_launch_description():
     pids_file = PathJoinSubstitution([share, 'config', 'wheel_pids.yaml'])
     plugins_file = PathJoinSubstitution([share, 'config', 'mujoco_plugins.yaml'])
     camera_file = PathJoinSubstitution([share, 'config', 'camera.yaml'])
+    lidar_file = PathJoinSubstitution([share, 'config', 'lidar.yaml'])
 
     robot_description = ParameterValue(
         Command([
@@ -71,7 +72,8 @@ def generate_launch_description():
             emulate_tty=True,
             output='both',
             parameters=[{'use_sim_time': True}, ParameterFile(controllers_file),
-                        ParameterFile(plugins_file), ParameterFile(camera_file)],
+                        ParameterFile(plugins_file), ParameterFile(camera_file),
+                        ParameterFile(lidar_file)],
             on_exit=Shutdown(),
         ),
         # One spawner activates the controllers in order; separate spawners race.

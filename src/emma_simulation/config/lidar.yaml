@@ -1,0 +1,15 @@
+# 2D lidar under the base's top plate, published by emma_simulation's PlanarLidarPlugin
+# (sim.launch.py passes this file to ros2_control_node). The rays start at the MJCF site the
+# converter makes from the URDF's laser_frame. Topic and frame follow the myAGV's YDLidar driver,
+# so the real sensor can replace it later.
+/**:
+  ros__parameters:
+    mujoco_plugins:
+      lidar:
+        type: emma_simulation/PlanarLidarPlugin
+        site: laser_frame
+        topic: /scan
+        publish_rate: 10.0
+        beams: 360
+        range_min: 0.12
+        range_max: 8.0

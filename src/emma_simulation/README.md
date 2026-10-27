@@ -7,7 +7,7 @@ real robot would use.
 
 **Scope:** the arm, gripper, and mecanum base are controlled. The base is a free body
 standing on four mecanum wheels modelled with passive rollers. The wrist camera publishes colour
-and depth images.
+and depth images, and a 2D lidar under the base's top plate publishes `/scan`.
 
 ## Contents
 
@@ -18,6 +18,8 @@ and depth images.
 | `config/wheel_pids.yaml` | Velocity PID gains the MuJoCo plugin uses to drive the wheel motors. |
 | `config/mujoco_plugins.yaml` | mujoco_ros2_control plugins: `FreeJointStatePublisherPlugin` publishes ground-truth poses of free bodies on `/free_joint_states`. |
 | `config/camera.yaml` | `CameraPlugin` settings for the wrist camera: frame, topics, 5 Hz. |
+| `config/lidar.yaml` | `PlanarLidarPlugin` settings for the base lidar: site, topic, beams, range, 10 Hz. |
+| `src/planar_lidar_plugin.{hpp,cpp}`, `plugins.xml` | `emma_simulation/PlanarLidarPlugin`, a mujoco_ros2_control plugin that publishes the lidar scan (see *Base lidar*). |
 | `mujoco/scene.xml` | Top-level MJCF: floor, lights, visual settings; includes the robot model. |
 | `mujoco/pick_scene.xml` | `scene.xml` plus a table and a graspable 10 mm block, for the pick-and-place demo in `emma_behaviors`. |
 | `mujoco/mujoco_inputs.xml` | Converter input: actuators, mimic-finger equality, joint damping and armature, geom defaults, the wrist camera. |
@@ -103,6 +105,26 @@ Other useful topics:
   body, at 10 Hz. In `pick_scene.xml` that includes the `block`; the robot's own free joint always
   reads identity.
 - `/clock`: sim time. Every node runs with `use_sim_time`, so pausing MuJoCo pauses the controllers.
+
+### Base lidar
+
+`PlanarLidarPlugin` (built in this package, configured in `config/lidar.yaml`) casts a fan of rays
+from the `laser_frame` site with `mj_multiRay` and publishes:
+
+| Topic | Type | Notes |
+|---|---|---|
+| `/scan` | `sensor_msgs/LaserScan` | 360 beams, 1° apart from −π, 0.12–8 m, in `laser_frame`, 10 Hz, best-effort QoS |
+
+The converter makes the site from the URDF's `laser_frame` link (8 cm up, facing −x, see
+`emma_description`). Rays ignore the base body itself and hit every other geom, the robot's
+wheels and arm included; at the home pose none are in the scan plane. Nothing in range reads
+`+inf`. Topic and frame follow the myAGV's YDLidar driver.
+
+MuJoCo's own `rangefinder` sensors (and mujoco_ros2_control's deprecated `RangefinderLidarPlugin`
+that wraps them) are evaluated on every physics step. 360 of them slow `FloorPlan201` from about
+12× to 0.3× real time, and setting the sensors' `interval` doesn't skip the work. The plugin
+casts only at the publish rate instead: about 6 ms per scan in `FloorPlan201`, most of it spent
+on the room's visual meshes.
 
 ### Living room scene
 
@@ -278,6 +300,9 @@ The URDF stays the only description. Everything the MJCF adds lives in `mujoco_i
 - **Room scenes use the room's floor**: the ceiling, walls and floor come from the room, and the
   floor sits at z = 0. The composed XML holds absolute paths, so regenerate it after moving the
   checkout.
+- **The lidar scan is ideal**: no noise, no motion distortion, and the chassis pillars that may
+  block parts of the real sensor's view are not modelled, because rays skip the base body.
+  The 360-beam, 8 m, 10 Hz settings are placeholders, not the real YDLidar's.
 - **Camera rendering costs CPU/GPU**: the plugin renders 5 colour and depth frames a second
   even when nothing reads them. Lower `camera_publish_rate` in `config/camera.yaml` if the sim
   runs slow.

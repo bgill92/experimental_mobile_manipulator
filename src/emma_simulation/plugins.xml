@@ -1,0 +1,7 @@
+<library path="emma_simulation_plugins">
+  <class name="emma_simulation/PlanarLidarPlugin"
+         type="emma_simulation::PlanarLidarPlugin"
+         base_class_type="mujoco_ros2_control_plugins::MuJoCoROS2ControlPluginBase">
+    <description>2D lidar: casts a fan of rays from an MJCF site at the publish rate and publishes a LaserScan.</description>
+  </class>
+</library>
