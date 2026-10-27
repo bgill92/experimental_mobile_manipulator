@@ -12,7 +12,7 @@ pixi run bash -c "source install/setup.bash && ros2 run <pkg> <node>"
 pixi shell   # interactive shell with the environment activated
 ```
 
-Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host shell. Add new dependencies with `pixi add <package>` (ROS packages are named `ros-lyrical-<name>`), not with apt or pip.
+Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host shell. Declare ROS dependencies of a package in its `package.xml`: the `[dev]` table in `pixi.toml` installs whatever the `src/` package manifests declare. Add anything a `package.xml` cannot name (tools, non-ROS libraries) with `pixi add <package>` (ROS packages are named `ros-lyrical-<name>`). Never use apt or pip.
 
 ## External packages
 
