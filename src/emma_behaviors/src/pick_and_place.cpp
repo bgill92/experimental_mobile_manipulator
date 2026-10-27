@@ -121,7 +121,7 @@ void printTree(const beet::StatusTable<Tree>& table) {
   const Cell cell{*io, planner, viz};
   const rerun_tree::GraphLogger<Tree> graph(viz->stream(), "tree");
   beet::StatusTable<Tree> table;
-  beet::Runner runner{makeTree(cell), cell, table};
+  beet::Runner runner{makeTree(cell), cell, table.listeners()};
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node);

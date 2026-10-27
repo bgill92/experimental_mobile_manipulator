@@ -26,7 +26,7 @@ template <class S>
   return beet::sequence(
       beet::named<"plan look">(beet::offload(&planLook<S>)),
       beet::named<"execute look">(&execute<S>), beet::named<"settle">(&settle<S>),
-      beet::named<"detect">(beet::timeout_ticks(kDetectTicks, &waitBlockPose<S>)));
+      beet::named<"detect">(beet::timeout_ticks<kDetectTicks>(&waitBlockPose<S>)));
 }
 
 /// @param cell Captured for the recovery handler, which sees only the error.
@@ -51,31 +51,32 @@ template <class S>
 
   // retry and fallback swallow pick_place's errors, so log each attempt's here. The handler
   // returns the error unchanged; beet has no pass-through error hook.
-  auto logged = beet::recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout>(
+  auto logged = beet::recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout, beet::Exception>(
       std::move(pick_place), [cell]<class E>(E error) -> Result<Cell, E> {
         logEvent(cell, "attempt failed: " + describe(error), Viz::Level::kWarning);
         return beet::make_unexpected(std::move(error));
       });
 
-  // Handles its own ActionFailed / NoPlan, so the only error left is the deliberate GaveUp.
+  // Handles its own ActionFailed / NoPlan / beet::Exception, so the only error left is the
+  // deliberate GaveUp. The handler is noexcept so it adds no beet::Exception of its own.
   auto recover = beet::sequence(
-      beet::recover<ActionFailed, NoPlan>(
+      beet::recover<ActionFailed, NoPlan, beet::Exception>(
           beet::sequence(beet::named<"recover: open">(&openGripper<Cell>),
                          beet::named<"recover: detach">(&detachIfHeld),
                          beet::named<"recover: plan home">(beet::offload(&planHome<Cell>)),
                          beet::named<"recover: execute home">(&execute<Cell>)),
-          [cell](const auto& error) {
+          [cell](const auto& error) noexcept {
             logEvent(cell, "recovery failed: " + describe(error), Viz::Level::kError);
             return cell;
           }),
       beet::named<"give up">(&giveUp));
 
-  // beet's retry(2) is two attempts in total, like py_trees' Retry(num_failures=2). fallback's
+  // beet's retry<2> is two attempts in total, like py_trees' Retry(num_failures=2). fallback's
   // error is its last child's, so pick_place's errors never reach the root.
   return beet::sequence(
       beet::named<"wait for joints">(&waitForJoints),
       beet::fallback(
-          beet::named<"retry">(beet::retry(2, beet::named<"pick and place">(logged))),
+          beet::named<"retry">(beet::retry<2>(beet::named<"pick and place">(logged))),
           beet::named<"recover">(recover)));
 }
 

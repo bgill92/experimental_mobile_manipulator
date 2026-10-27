@@ -4,7 +4,10 @@ Issues, shortcomings and bugs we hit while porting emma's py_trees pick and plac
 (`src/emma_behaviors`) to [beet](https://github.com/EzraBrooks/beet). Written to be handed to
 beet's author as is.
 
-All entries are against beet `436617cd2fd3abc5811223b63977b2ec74800c27` (2026-10-07), built with
+Entries 1 to 12 are against beet `436617cd2fd3abc5811223b63977b2ec74800c27` (2026-10-07). Since
+bumping to `090bfa4` (0.2.0, 2026-10-22), 5 and 7 are fixed upstream (`offload` joins its
+`std::jthread` on halt; `install()` and `find_package(beet)`), and 3 is partly covered by
+`rate<K>` / `Runner::run(period)`. Built with
 conda-forge GCC 15.3.0 (`x86_64-conda-linux-gnu-g++`), `-std=c++20`, tl-expected 1.3.1 from
 conda-forge. Overall the port went smoothly: the whole tree, its `static_assert`s on the root's
 output and error types, and the traced `Runner` all compiled first time on GCC 15 with
@@ -145,7 +148,7 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   `NotPlaced` from `check placed`) when `retry(2, ...)` and `fallback` discard those errors.
 - **Happened:** beet has no pass-through error hook; `finally` sees neither the result nor the
   error. Timeouts raised by `timeout_ticks` have no leaf of ours to log from.
-- **Workaround:** `recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout>(pick_place, handler)`
+- **Workaround:** `recover<NoPlan, ActionFailed, NotPlaced, beet::Timeout, beet::Exception>(pick_place, handler)`
   whose generic handler logs and returns the same error, so the error set is unchanged. It adds a
   `recover` node to the graph that never recovers anything.
 - **Suggestion:** an `on_error(n, fn)` (or `tap`) decorator that calls `fn(input, error)` and

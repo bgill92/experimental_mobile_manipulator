@@ -1,7 +1,7 @@
 # emma_behaviors
 
 emma's pick and place as a typed behaviour tree on [beet](https://github.com/EzraBrooks/beet), a
-header-only C++20 library (git submodule at `external_packages/beet`, pinned at `436617cd`). The
+header-only C++20 library (git submodule at `external_packages/beet`, pinned at `090bfa4`, 0.2.0). The
 tree looks at the table, takes the 10 mm block's pose from `emma_perception`'s detector
 (`/block_pose`), picks the block up, puts it down at `kPlaceXyz` (8 cm to the side of
 `kBlockStart`), looks again to check where it landed and returns the arm home. Planning uses
@@ -71,7 +71,7 @@ Sequence                                          [Cell -> Cell], fails only wit
 ├─ wait for joints                                until a joint state with all arm joints
 └─ Fallback
    ├─ retry (2 attempts)
-   │  └─ pick and place                            recover<all four errors> that logs the error and fails with it
+   │  └─ pick and place                            recover<all five errors> that logs the error and fails with it
    │     Sequence                                 [Cell -> Cell]
    │     plan look → execute look                 RRT to kLookQ (offloaded)    [Cell -> Planned<Cell> -> Cell]
    │     settle                                   5 ticks
@@ -90,7 +90,7 @@ Sequence                                          [Cell -> Cell], fails only wit
    │     check placed                             within 20 mm of kPlaceXyz    [Looked -> Cell]
    │     plan home → execute home                 RRT (offloaded)
    └─ recover (Sequence)
-      recover<ActionFailed, NoPlan>(open → detach → plan home → execute home)
+      recover<ActionFailed, NoPlan, beet::Exception>(open → detach → plan home → execute home)
       give up                                     always fails with GaveUp
 ```
 
@@ -98,10 +98,11 @@ Sequence                                          [Cell -> Cell], fails only wit
 
 | Error | Raised by | Handled by |
 |---|---|---|
-| `NoPlan` | planning leaves (no IK, no path, no joint state) | `retry`, then the fallback; inside recovery by `recover<ActionFailed, NoPlan>` |
+| `NoPlan` | planning leaves (no IK, no path, no joint state) | `retry`, then the fallback; inside recovery by `recover<ActionFailed, NoPlan, beet::Exception>` |
 | `ActionFailed` | `execute`, gripper leaves (rejected, aborted, cancelled) | as `NoPlan` |
 | `beet::Timeout` | `detect` (no fresh `/block_pose` within 50 ticks) | `retry`, then the fallback |
 | `NotPlaced` | `check placed` | `retry`, then the fallback |
+| `beet::Exception` | any leaf that is not `noexcept` and throws (beet catches it) | as `NoPlan`. `wait for joints`, `give up` and the recovery handler are `noexcept`, so none reaches the root |
 | `GaveUp` | `give up` | nothing: the root's only error, so the run fails on purpose |
 
 ## Ticks and threads

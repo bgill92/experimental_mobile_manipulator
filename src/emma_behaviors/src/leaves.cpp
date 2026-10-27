@@ -134,6 +134,7 @@ std::string describe(const GaveUp&) { return "gave up after recovery"; }
 std::string describe(const beet::Timeout& error) {
   return "timed out after " + std::to_string(error.ticks) + " ticks";
 }
+std::string describe(const beet::Exception& error) { return "exception: " + error.what(); }
 
 Eigen::Matrix4d poseToTform(const geometry_msgs::msg::PoseStamped& pose) {
   const geometry_msgs::msg::Quaternion& o = pose.pose.orientation;
@@ -239,7 +240,7 @@ Task<Result<beet::unit, ActionFailed>> sendGripperGoal(Cell cell, double positio
   co_return beet::unit{};
 }
 
-Task<Result<Cell, never>> waitForJoints(Cell cell) {
+Task<Result<Cell, never>> waitForJoints(Cell cell) noexcept {
   while (!armQ(*cell.io).has_value()) {
     co_await beet::running;
   }
@@ -379,7 +380,7 @@ Result<Cell, NotPlaced> checkPlaced(Looked looked) {
   return std::move(looked.cell);
 }
 
-Result<Cell, GaveUp> giveUp(Cell cell) {
+Result<Cell, GaveUp> giveUp(Cell cell) noexcept {
   logEvent(cell, describe(GaveUp{}), Viz::Level::kError);
   return tl::make_unexpected(GaveUp{});
 }

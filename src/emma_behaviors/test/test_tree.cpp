@@ -117,7 +117,7 @@ TEST_F(TreeTest, RunsTracedAndWaitsForJoints) {
   // thread. This also instantiates the traced tree the executable runs.
   const Cell cell{std::make_shared<Io>(), cell_->planner, cell_->viz};
   beet::StatusTable<Tree> table;
-  beet::Runner runner{makeTree(cell), cell, table};
+  beet::Runner runner{makeTree(cell), cell, table.listeners()};
   EXPECT_EQ(runner.tick(), beet::Status::Running);
   EXPECT_EQ(runner.tick(), beet::Status::Running);
   EXPECT_EQ(table.status(0), beet::NodeStatus::Running);

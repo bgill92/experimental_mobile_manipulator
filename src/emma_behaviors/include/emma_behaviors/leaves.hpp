@@ -63,6 +63,7 @@ struct GaveUp {};
 [[nodiscard]] std::string describe(const NotPlaced& error);
 [[nodiscard]] std::string describe(const GaveUp& error);
 [[nodiscard]] std::string describe(const beet::Timeout& error);
+[[nodiscard]] std::string describe(const beet::Exception& error);
 
 // Edge types.
 
@@ -144,7 +145,7 @@ void logEvent(const Cell& cell, std::string_view text, Viz::Level level = Viz::L
 // Leaves.
 
 /// Waits until a joint state with every arm joint has arrived.
-[[nodiscard]] Task<Result<Cell, never>> waitForJoints(Cell cell);
+[[nodiscard]] Task<Result<Cell, never>> waitForJoints(Cell cell) noexcept;
 
 /// RRT from the latest joint state to `q_goal`.
 template <class S>
@@ -242,6 +243,7 @@ template <class S>
 [[nodiscard]] Result<Cell, NotPlaced> checkPlaced(Looked looked);
 
 /// Always fails with GaveUp, after recovery has brought the arm home.
-[[nodiscard]] Result<Cell, GaveUp> giveUp(Cell cell);
+/// noexcept so beet does not add beet::Exception to the root's error set.
+[[nodiscard]] Result<Cell, GaveUp> giveUp(Cell cell) noexcept;
 
 }  // namespace emma_behaviors
