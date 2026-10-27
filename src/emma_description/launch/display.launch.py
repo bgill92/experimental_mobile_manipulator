@@ -12,6 +12,7 @@ def generate_launch_description():
     gui = LaunchConfiguration('gui')
     model = LaunchConfiguration('model')
     gripper = LaunchConfiguration('gripper')
+    camera = LaunchConfiguration('camera')
     share = FindPackageShare('emma_description')
 
     robot_description = ParameterValue(
@@ -19,6 +20,7 @@ def generate_launch_description():
             'xacro ', PathJoinSubstitution([share, 'urdf', 'emma.urdf.xacro']),
             ' model:=', model,
             ' gripper:=', gripper,
+            ' camera:=', camera,
         ]),
         value_type=str,
     )
@@ -36,6 +38,9 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'gripper', default_value='parallel', choices=['parallel', 'none'],
             description='End effector on the arm flange'),
+        DeclareLaunchArgument(
+            'camera', default_value='gemini305', choices=['gemini305', 'none'],
+            description='Wrist camera on the gripper'),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',

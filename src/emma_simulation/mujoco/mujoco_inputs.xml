@@ -40,6 +40,12 @@
   </raw_inputs>
 
   <processed_inputs>
+    <!-- Wrist RGB-D camera at the URDF's colour optical frame (the converter turns the REP 103
+         optical frame into MuJoCo's camera convention). The converter fails if the URDF has no
+         such link, so this needs the default camera:=gemini305. fovy 65 deg at 640x400 gives
+         about 91 deg horizontally, between the Gemini 305's 94 deg RGB and 88 deg depth. -->
+    <camera site="wrist_camera_color_optical_frame" name="wrist_camera" fovy="65" mode="fixed"
+            resolution="640 400"/>
     <!-- Real joint damping sits outside the actuator force clamp, so it keeps a saturated
          position actuator from limit cycling. -->
     <modify_element type="joint" name="joint2_to_joint1" damping="1" armature="0.01"/>
