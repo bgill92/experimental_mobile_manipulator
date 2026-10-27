@@ -1,0 +1,17 @@
+# Builds the description package straight from the upstream repo; only it builds on Lyrical,
+# the rest of the repo targets older ROS distros.
+[package.build.backend]
+name = "pixi-build-ros"
+version = "0.*"
+
+[package.build.config]
+distro = "lyrical"
+
+[package.build.source]
+git = "https://github.com/elephantrobotics/myagv_ros2.git"
+rev = "afb054bbb54423c09291622956e950062c193ec9"
+subdirectory = "myagv_description"
+
+# Upstream package.xml omits urdf, which its CMakeLists.txt finds.
+[package.host-dependencies]
+ros-lyrical-urdf = "*"

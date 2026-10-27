@@ -12,13 +12,13 @@ pixi run bash -c "source install/setup.bash && ros2 run <pkg> <node>"
 pixi shell   # interactive shell with the environment activated
 ```
 
-Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host shell. Add new dependencies with `pixi add <package>` (ROS packages are named `ros-lyrical-<name>`), not with apt or pip.
+Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host shell. Declare ROS dependencies of a package in its `package.xml`: the `[dev]` table in `pixi.toml` installs whatever the `src/` package manifests declare. Add anything a `package.xml` cannot name (tools, non-ROS libraries) with `pixi add <package>` (ROS packages are named `ros-lyrical-<name>`). Never use apt or pip.
 
 ## External packages
 
-Upstream Elephant Robotics repos live in `external_packages/` as git submodules (clone with `git submodule update --init`). Only their description packages are built (see the `build` task in `pixi.toml`); the rest of those repos targets older ROS distros and will not build on Lyrical. Do not edit files inside the submodules.
+The upstream Elephant Robotics description packages (`myagv_description`, `mycobot_description`) are pixi source dependencies. Each has a small manifest in `external_packages/<name>/pixi.toml` that points `pixi-build-ros` at a pinned commit of the upstream repo and adds the dependencies its `package.xml` leaves out. pixi builds them into conda packages, so colcon only builds `src/`. Only the description packages are built; the rest of those repos targets older ROS distros and will not build on Lyrical. Change upstream behaviour from this repo (as `emma.urdf.xacro` does), not by patching their sources.
 
-`external_packages/beet` is [beet](https://github.com/EzraBrooks/beet), a header-only C++20 behaviour tree library pinned at `090bfa4` (0.2.0). It is not a colcon package: `src/emma_behaviors/CMakeLists.txt` pulls it in with `add_subdirectory`. Problems found in it go into `docs/beet-feedback.md`. The Rerun C++ SDK and viewer that `emma_behaviors` logs to come from pixi (`librerun-sdk`, `rerun-sdk`).
+[beet](https://github.com/EzraBrooks/beet), a header-only C++20 behaviour tree library, is a pixi git dependency pinned at `090bfa4` (0.2.0). pixi builds it into a conda package with beet's own `pixi-build-cmake` manifest, and `src/emma_behaviors` uses it through `find_package(beet)`. To try a local beet checkout, point the `beet` entry in `pixi.toml` at it with `{ path = "..." }`. Problems found in it go into `docs/beet-feedback.md`. The Rerun C++ SDK and viewer that `emma_behaviors` logs to come from pixi (`librerun-sdk`, `rerun-sdk`).
 
 ## License
 

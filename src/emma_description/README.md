@@ -16,7 +16,7 @@ standing in for an Orbbec Gemini 305.
 | `rviz/emma.rviz` | RViz config: robot model, fixed frame `base_footprint`. |
 
 The base description and meshes come from `myagv_description` and the arm meshes from
-`mycobot_description`. Both packages are built from the submodules in `external_packages/`.
+`mycobot_description`. pixi builds both from the upstream repos (see `external_packages/`).
 
 ## Running
 
@@ -99,7 +99,7 @@ flange mount from `mycobot_280_jn_parallel_gripper.urdf`, 34 mm along the flange
   name. It is not used here.
 
 **Base** (`myagv_ros2` `galactic-JN`, `afb054b`, `myAGV.urdf`): used unchanged, since the
-submodule is not edited. `emma.urdf.xacro` adds what it lacks: the mass through the
+upstream package is not edited. `emma.urdf.xacro` adds what it lacks: the mass through the
 `base_inertia` link, and the four wheel links and joints, which upstream does not have.
 
 ## Assumptions and caveats

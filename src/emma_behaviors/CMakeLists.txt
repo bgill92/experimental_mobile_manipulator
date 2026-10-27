@@ -7,6 +7,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(beet REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(emma_manipulation REQUIRED)
@@ -16,15 +17,6 @@ find_package(rclcpp_action REQUIRED)
 find_package(rerun_sdk REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-
-# beet is header-only and has no package.xml; it is consumed straight from the submodule.
-set(BEET_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(BEET_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../external_packages/beet
-  ${CMAKE_CURRENT_BINARY_DIR}/beet
-  EXCLUDE_FROM_ALL
-)
 
 # Leaves, ROS I/O and Rerun logging, shared by the executable and the tests. Static so nothing
 # needs installing; only viz.cpp includes rerun.hpp.

@@ -11,7 +11,7 @@ ROS 2 Lyrical Luth and all build tools come from the [pixi](https://pixi.sh)
 environment in `pixi.toml`; no system ROS install is needed.
 
 ```bash
-git clone --recurse-submodules https://github.com/bgill92/experimental_mobile_manipulator.git
+git clone https://github.com/bgill92/experimental_mobile_manipulator.git
 cd experimental_mobile_manipulator
 pixi run build
 ```
@@ -76,6 +76,6 @@ pixi run test   # gtest (emma_manipulation, emma_behaviors), pytest and mypy (em
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The Elephant Robotics packages and beet in `external_packages/`
+MIT, see [LICENSE](LICENSE). The Elephant Robotics description packages, beet
 and the gripper meshes in `src/emma_description/meshes/parallel_gripper/` keep their own licenses.
 MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0.

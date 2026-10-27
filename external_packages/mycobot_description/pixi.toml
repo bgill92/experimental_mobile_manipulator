@@ -1,0 +1,18 @@
+# Builds the description package straight from the upstream repo; only it builds on Lyrical,
+# the rest of the repo targets older ROS distros.
+[package.build.backend]
+name = "pixi-build-ros"
+version = "0.*"
+
+[package.build.config]
+distro = "lyrical"
+
+[package.build.source]
+git = "https://github.com/elephantrobotics/mycobot_ros2.git"
+rev = "d42ff61a78122c79246623391540d75738b03b23"
+subdirectory = "mycobot_description"
+
+# Upstream package.xml omits what its setup.py imports.
+[package.host-dependencies]
+packaging = "*"
+setuptools = "*"

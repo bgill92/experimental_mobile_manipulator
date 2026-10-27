@@ -9,7 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- beet (external_packages/beet, add_subdirectory) and the Rerun C++ SDK (pixi
+  <!-- beet (pixi git dependency) and the Rerun C++ SDK (pixi
        librerun-sdk) have no ROS package names, so they are not listed here. -->
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
