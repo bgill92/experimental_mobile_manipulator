@@ -4,16 +4,16 @@ Issues, shortcomings and bugs we hit while porting emma's py_trees pick and plac
 (`src/emma_behaviors`) to [beet](https://github.com/EzraBrooks/beet). Written to be handed to
 beet's author as is.
 
-Entries 1 to 12 are against beet `436617cd2fd3abc5811223b63977b2ec74800c27` (2026-10-07). Since
-bumping to `090bfa4` (0.2.0, 2026-10-22), 5 and 7 are fixed upstream (`offload` joins its
-`std::jthread` on halt; `install()` and `find_package(beet)`), and 3 is partly covered by
-`rate<K>` / `Runner::run(period)`. Built with
-conda-forge GCC 15.3.0 (`x86_64-conda-linux-gnu-g++`), `-std=c++20`, tl-expected 1.3.1 from
-conda-forge. Overall the port went smoothly: the whole tree, its `static_assert`s on the root's
+Entries 1 to 10 were found against beet `436617cd2fd3abc5811223b63977b2ec74800c27` (2026-10-07)
+and are still open at `090bfa4` (0.2.0, 2026-10-22), the version we now use; entries 11 and 12
+came from that bump. Issues fixed upstream are removed from this list. Built with conda-forge
+GCC 15.3.0 (`x86_64-conda-linux-gnu-g++`), `-std=c++20`, tl-expected 1.3.1 from conda-forge.
+Overall the port went smoothly: the whole tree, its `static_assert`s on the root's
 output and error types, and the traced `Runner` all compiled first time on GCC 15 with
 `-Wall -Wextra -Wpedantic` and no warnings from beet's headers.
 
-Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
+Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**; entries 1 to 10 also have their
+**Status** at `090bfa4`.
 
 ## 1. No way to run a never-finishing side branch under `parallel_*`
 
@@ -32,6 +32,7 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   `spin_some` before each `Runner::tick()`); leaves read it through `Cell`.
 - **Suggestion:** drop `never` from `parallel_any`'s output union (`union_t` already drops it from
   error sets), so `variant<Out, never>` collapses to `Out`.
+- **Status at `090bfa4`:** open; still listed under the README's current limitations.
 
 ## 2. `recover` handlers see only the error, not the input
 
@@ -39,6 +40,8 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
 - **Happened:** the handler is called with the error only (README gap).
 - **Workaround:** `makeTree(Cell cell)` captures `cell` in the handler lambda at build time.
 - **Suggestion:** also accept handlers callable as `handler(input, error)`.
+- **Status at `090bfa4`:** open. The README now presents it as a design choice: errors should
+  carry the context their handler needs, and anything else is captured when the tree is built.
 
 ## 3. Only tick-count timeouts
 
@@ -48,6 +51,10 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   Deterministic, but tied to the tick rate and stretched by any slow tick.
 - **Suggestion:** a `timeout(duration, node)` / `wait(duration)` pair on a pluggable clock (so a
   ROS sim clock could drive it).
+- **Status at `090bfa4`:** partly covered. `rate<K>(node)` and `Runner::run(period)` pace the
+  tree on a drift-free schedule with overrun handling (`Skip` / `Burst` / `Delay`), so tick counts
+  track wall time better than a hand-written sleep loop. There is still no wall-clock timeout, and
+  emma still ticks by hand with `Runner::tick()`.
 
 ## 4. Resources ride through every intermediate output
 
@@ -58,19 +65,10 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
 - **Workaround:** `Cell` is three `shared_ptr`s, embedded in every state.
 - **Suggestion:** a context/environment parameter the `Runner` hands to every leaf (typed, like
   the input), separate from the data flowing along edges.
+- **Status at `090bfa4`:** open. The README's design philosophy now calls it the tradeoff of
+  passing data along edges.
 
-## 5. Halting an `offload` job only requests a stop
-
-- **Tried:** RRT plans in `beet::offload`.
-- **Happened:** a halted job keeps running on its detached thread until it returns; its result is
-  dropped. roboplan's RRT takes no `std::stop_token`, so a halt (e.g. a timeout around a plan)
-  would leave the planner busy on another thread while the tree moves on.
-- **Workaround:** no halt path reaches an offloaded plan in emma's tree, and every planner leaf is
-  in one `sequence`, so the non-thread-safe planner is never used by two threads at once.
-- **Suggestion:** document this prominently next to `offload`, or offer a variant that keeps the
-  node `Running` (or joins) until the job has really finished after a halt.
-
-## 6. `rerun_tree.hpp` lives in `examples/`
+## 5. `rerun_tree.hpp` lives in `examples/`
 
 - **Tried:** the tree status graph in Rerun.
 - **Happened:** the graph logger is an example, not part of the library.
@@ -78,21 +76,10 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   attribution comment, plus one change: `shorten()` also strips our namespaces.
 - **Suggestion:** ship it as an optional header (e.g. `beet/rerun.hpp`, only usable when
   `rerun_sdk` is found), with a configurable list of prefixes to strip.
+- **Status at `090bfa4`:** open; upstream only modernised the example (`std::format`,
+  `using enum`).
 
-## 7. No `install()` or package config
-
-- **Tried:** consuming beet from a colcon workspace.
-- **Happened:** `CMakeLists.txt` has no `install()` / `beetConfig.cmake` export, so beet works with
-  `add_subdirectory` or FetchContent only, not `find_package(beet)`; it is not on conda-forge.
-  (Its own `FetchContent(tl-expected FIND_PACKAGE_ARGS 1.1)` resolved offline against the
-  installed tl-expected 1.3.1, which was nice.)
-- **Workaround:** a git submodule at `external_packages/beet`, pulled in with
-  `add_subdirectory(... EXCLUDE_FROM_ALL)` and `BEET_BUILD_TESTS` / `BEET_BUILD_EXAMPLES` forced
-  off.
-- **Suggestion:** install the headers and export `beet::beet` with a config file; a conda-forge
-  recipe would then be small.
-
-## 8. Parameterised leaves must be non-generic
+## 6. Parameterised leaves must be non-generic
 
 - **Tried:** `beet::offload` around a plan whose state type is a template parameter.
 - **Happened:** `offload` reads the argument type through `callable_traits`, so generic lambdas
@@ -106,8 +93,9 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   passed as `&planLook<Cell>`.
 - **Suggestion:** an `offload<In>(fn)` overload like `node<In>(fn)`, and a `static_assert` with a
   readable message when `callable_traits` cannot see the arguments.
+- **Status at `090bfa4`:** open; `offload` still reads the argument type through `callable_traits`.
 
-## 9. Intermediate outputs and per-attempt copies
+## 7. Intermediate outputs and per-attempt copies
 
 - **Tried:** a 23-step pick-and-place `sequence` under `retry(2, ...)` and `fallback`.
 - **Happened:** `sequence` keeps every intermediate output alive until it finishes (one
@@ -115,8 +103,9 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
 - **Workaround:** none needed: the outputs are a few KB (`Planned` holds a trajectory) and `Cell`
   is cheap to copy.
 - **Suggestion:** destroy each intermediate value once the next child has consumed it.
+- **Status at `090bfa4`:** open; `sequence` still keeps a tuple of `std::optional`s, one per child.
 
-## 10. Offloaded functions share state the type system cannot see
+## 8. Offloaded functions share state the type system cannot see
 
 - **Tried:** planning leaves read the latest joint state, which ROS callbacks on the main thread
   update.
@@ -127,8 +116,9 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
 - **Suggestion:** a way to snapshot inputs on the tick thread before the job starts (e.g.
   `offload(prepare, job)`, where `prepare` runs in the tick and `job` gets its result), so jobs
   only see values they own.
+- **Status at `090bfa4`:** open; still listed under the README's current limitations.
 
-## 11. Unlabelled nodes in traces show only their kind
+## 9. Unlabelled nodes in traces show only their kind
 
 - **Tried:** printing the final tree from `beet::tree_info<Tree>` and `StatusTable` at the end of
   `pick_and_place` (the replacement for py_trees' `unicode_tree` in the `pick-check` log).
@@ -141,8 +131,9 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   are depth-first, so one forward pass); the leaf's name is still lost.
 - **Suggestion:** default a leaf's label to its function's name when it is a function pointer, and
   add `depth` to `node_info`.
+- **Status at `090bfa4`:** open; `node_info` is unchanged (`kind`, `label`, type names, `parent`).
 
-## 12. No hook to observe an error that a later node swallows
+## 10. No hook to observe an error that a later node swallows
 
 - **Tried:** logging why each pick-and-place attempt failed (`beet::Timeout` from `detect`,
   `NotPlaced` from `check placed`) when `retry(2, ...)` and `fallback` discard those errors.
@@ -153,3 +144,35 @@ Each entry: **Tried**, **Happened**, **Workaround**, **Suggestion**.
   `recover` node to the graph that never recovers anything.
 - **Suggestion:** an `on_error(n, fn)` (or `tap`) decorator that calls `fn(input, error)` and
   passes the result through, with the input available so handlers need not capture it.
+- **Status at `090bfa4`:** open. Since 0.2.0 the workaround must also list `beet::Exception`, or a
+  throw inside `pick_place` is retried without a log line.
+
+## 11. 0.2.0's exceptions-as-errors change widened every error set silently
+
+- **Tried:** bumping from `436617cd` to `090bfa4`.
+- **Happened:** any leaf or handler that is not `noexcept` now has `beet::Exception` in its error
+  set. That covered every leaf in emma's tree. The only signal was our own
+  `static_assert(std::is_same_v<beet::error_t<Tree>, GaveUp>)`, which failed with just
+  `static assertion failed` and did not show the new type. Printing it took an incomplete-type
+  trick (`template <class> struct Show; Show<beet::error_t<Tree>> x;`), which gave
+  `std::variant<beet::Exception, GaveUp>`. Without that assert, the change would have gone unseen:
+  a throw inside `retry` used to escape `Runner::tick()` and crash the node, but it is now an
+  ordinary error that `retry` and `fallback` swallow. `retry<N>`, `timeout_ticks<N>` and
+  `beet::Listeners` also changed in this release, with no changelog or migration notes.
+- **Workaround:** `beet::Exception` added to both `recover` lists, and `noexcept` added to
+  `waitForJoints`, `giveUp` and the recovery handler, so the root's error set is `GaveUp` again.
+- **Suggestion:** a changelog or release notes for breaking changes. Also a helper that names the
+  actual error set when an assert on it fails (e.g. `beet::assert_errors<Tree, GaveUp>()`, whose
+  failure instantiates a template with the real type in its name).
+
+## 12. A `Result<T, never>` leaf can still fail
+
+- **Tried:** `Task<Result<Cell, never>> waitForJoints(Cell)`, the tree's first leaf, which sits
+  before the `fallback` and so outside every `recover`.
+- **Happened:** the signature reads as "cannot fail", but because the coroutine was not `noexcept`
+  the node's error set was `beet::Exception`, and that alone put `beet::Exception` on the root. The
+  same applies to `recover` handlers: `[cell](const auto& error) { ... }` adds `beet::Exception`
+  unless it is `noexcept`.
+- **Workaround:** mark `waitForJoints` and the recovery handler `noexcept`.
+- **Suggestion:** say next to `never` in the README that a leaf is infallible only when it is
+  `noexcept` and returns `Result<T, never>`.
