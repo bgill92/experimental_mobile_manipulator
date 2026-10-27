@@ -18,7 +18,7 @@ Do not call `ros2`, `colcon`, `cmake`, or the compilers directly from the host s
 
 Upstream Elephant Robotics repos live in `external_packages/` as git submodules (clone with `git submodule update --init`). Only their description packages are built (see the `build` task in `pixi.toml`); the rest of those repos targets older ROS distros and will not build on Lyrical. Do not edit files inside the submodules.
 
-`external_packages/beet` is [beet](https://github.com/EzraBrooks/beet), a header-only C++20 behaviour tree library pinned at `090bfa4` (0.2.0). It is not a colcon package: `src/emma_behaviors/CMakeLists.txt` pulls it in with `add_subdirectory`. Problems found in it go into `docs/beet-feedback.md`. The Rerun C++ SDK and viewer that `emma_behaviors` logs to come from pixi (`librerun-sdk`, `rerun-sdk`).
+[beet](https://github.com/EzraBrooks/beet), a header-only C++20 behaviour tree library, is a pixi git dependency pinned at `090bfa4` (0.2.0). pixi builds it into a conda package with beet's own `pixi-build-cmake` manifest, and `src/emma_behaviors` uses it through `find_package(beet)`. To try a local beet checkout, point the `beet` entry in `pixi.toml` at it with `{ path = "..." }`. Problems found in it go into `docs/beet-feedback.md`. The Rerun C++ SDK and viewer that `emma_behaviors` logs to come from pixi (`librerun-sdk`, `rerun-sdk`).
 
 ## License
 

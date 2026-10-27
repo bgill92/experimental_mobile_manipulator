@@ -1,7 +1,7 @@
 # emma_behaviors
 
 emma's pick and place as a typed behaviour tree on [beet](https://github.com/EzraBrooks/beet), a
-header-only C++20 library (git submodule at `external_packages/beet`, pinned at `090bfa4`, 0.2.0). The
+header-only C++20 library (a pixi git dependency pinned at `090bfa4`, 0.2.0). The
 tree looks at the table, takes the 10 mm block's pose from `emma_perception`'s detector
 (`/block_pose`), picks the block up, puts it down at `kPlaceXyz` (8 cm to the side of
 `kBlockStart`), looks again to check where it landed and returns the arm home. Planning uses

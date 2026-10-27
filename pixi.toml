@@ -6,6 +6,7 @@ channels = ["https://prefix.dev/robostack-lyrical", "conda-forge"]
 name = "experimental_mobile_manipulator"
 platforms = ["linux-64"]
 version = "0.1.0"
+preview = ["pixi-build"]
 
 [tasks]
 # Only the description packages of the upstream submodules build; the rest of those repos targets older ROS distros.
@@ -55,6 +56,8 @@ ros-lyrical-mujoco-ros2-control-msgs = ">=0.1.2,<0.2"
 ros-lyrical-cv-bridge = ">=4.1.0,<5"
 ros-lyrical-roboplan = ">=0.7.0,<0.8"
 librerun-sdk = ">=0.38.1,<0.39"
+# Built into a conda package by beet's own pixi-build-cmake manifest.
+beet = { git = "https://github.com/EzraBrooks/beet", rev = "090bfa4f875cd24554cc7e972b2645878742c317" }
 rerun-sdk = ">=0.38.1,<0.39"
 
 [pypi-dependencies]

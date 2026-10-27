@@ -76,6 +76,6 @@ pixi run test   # gtest (emma_manipulation, emma_behaviors), pytest and mypy (em
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The Elephant Robotics packages and beet in `external_packages/`
+MIT, see [LICENSE](LICENSE). The Elephant Robotics packages in `external_packages/`, beet
 and the gripper meshes in `src/emma_description/meshes/parallel_gripper/` keep their own licenses.
 MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0.
