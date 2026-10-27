@@ -62,6 +62,16 @@
     <xacro:mecanum_wheel name="front_right" x="0.1124" y="-0.1031"/>
     <xacro:mecanum_wheel name="rear_left" x="-0.1014" y="0.0945"/>
     <xacro:mecanum_wheel name="rear_right" x="-0.1014" y="-0.1031"/>
+
+    <!-- 2D lidar under the top plate. Frame name and pose are upstream's ydlidar_ros2_driver
+         launch (facing -x), not measured on this robot. MuJoCo's rangefinder fan is added by
+         postprocess_mjcf.py at this frame. -->
+    <link name="laser_frame"/>
+    <joint name="base_footprint_to_laser_frame" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="laser_frame"/>
+      <origin xyz="0.065 0 0.08" rpy="0 0 ${pi}"/>
+    </joint>
   </xacro:if>
   <xacro:if value="${model in ['arm', 'both']}">
     <xacro:include filename="$(find emma_description)/urdf/mycobot_280_m5.urdf.xacro"/>
