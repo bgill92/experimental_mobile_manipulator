@@ -9,8 +9,7 @@ version = "0.1.0"
 preview = ["pixi-build"]
 
 [tasks]
-# Only the description packages of the upstream submodules build; the rest of those repos targets older ROS distros.
-build = "colcon build --symlink-install --base-paths src external_packages/myagv_ros2/myagv_description external_packages/mycobot_ros2/mycobot_description"
+build = "colcon build --symlink-install --base-paths src"
 # Converts the URDF to MJCF in src/emma_simulation/mujoco/; rerun after changing the URDF or mujoco_inputs.xml.
 gen-mjcf = { cmd = "bash src/emma_simulation/scripts/gen_mjcf.sh", depends-on = ["build"] }
 # Robot model in RViz with joint sliders, no physics. Extra args pass through, e.g. `pixi run display model:=arm`.
@@ -57,6 +56,9 @@ ros-lyrical-cv-bridge = ">=4.1.0,<5"
 ros-lyrical-roboplan = ">=0.7.0,<0.8"
 librerun-sdk = ">=0.38.1,<0.39"
 # Built into a conda package by beet's own pixi-build-cmake manifest.
+# Upstream Elephant Robotics description packages, built by pixi-build-ros from git.
+ros-lyrical-myagv-description = { path = "external_packages/myagv_description" }
+ros-lyrical-mycobot-description = { path = "external_packages/mycobot_description" }
 beet = { git = "https://github.com/EzraBrooks/beet", rev = "090bfa4f875cd24554cc7e972b2645878742c317" }
 rerun-sdk = ">=0.38.1,<0.39"
 
