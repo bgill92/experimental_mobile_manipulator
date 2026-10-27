@@ -110,9 +110,12 @@ emma can also run in a furnished room from [MolmoSpaces](https://github.com/alle
 (AI2's iTHOR rooms converted to MJCF; data CC BY 4.0, not redistributed here):
 
 ```bash
-pixi run molmospaces-scene   # first run downloads ~30 MB on disk (~550 MB transferred)
-pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
+pixi run sim-living-room     # first run downloads ~30 MB on disk (~550 MB transferred)
 ```
+
+`sim-living-room` runs `molmospaces-scene` with its defaults, then
+`pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml`.
+Extra args pass through to the launch file, as with `sim`.
 
 The default is living room `FloorPlan201`, with emma in an open strip beside the sofa facing +y.
 Other rooms take the plan name and a spawn pose in the room's world frame:

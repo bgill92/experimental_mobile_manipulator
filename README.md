@@ -48,8 +48,14 @@ pixi run gen-mjcf   # regenerate the MuJoCo model after URDF changes
 To put emma in a furnished living room from [MolmoSpaces](https://github.com/allenai/molmospaces):
 
 ```bash
-pixi run molmospaces-scene   # downloads the room once, writes the combined scene
-pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml
+pixi run sim-living-room     # downloads FloorPlan201 once, writes the scene, launches the sim
+```
+
+For another room or spawn pose, write that scene and point `sim` at it:
+
+```bash
+pixi run molmospaces-scene FloorPlan205 x y yaw
+pixi run sim mujoco_model:=$PWD/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan205_emma.xml
 ```
 
 ## Pick and place

@@ -26,6 +26,8 @@ pick-check = { cmd = "bash src/emma_behaviors/scripts/pick_check.sh", depends-on
 # Downloads a MolmoSpaces iTHOR room (once) and writes a scene with emma in it. Args pass through:
 # `pixi run molmospaces-scene FloorPlan205 x y yaw --freeze-kg 4`. See src/emma_simulation/README.md.
 molmospaces-scene = "python src/emma_simulation/scripts/molmospaces_scene.py"
+# The sim in the default MolmoSpaces living room (FloorPlan201). Extra args pass through like `sim`.
+sim-living-room = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py mujoco_model:=$PIXI_PROJECT_ROOT/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml \"$@\"' --", depends-on = ["molmospaces-scene", "build"] }
 
 [dependencies]
 ros-lyrical-desktop = ">=0.13.0,<0.14"
