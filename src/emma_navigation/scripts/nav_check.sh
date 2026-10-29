@@ -23,10 +23,11 @@ trap cleanup EXIT
 # Map frame = spawn pose (x forward, y left). The goal is 2.3 m to the right, in the passage
 # between the sofa and the dining chairs, turned to face the spawn point.
 status=0
-timeout "${limit}" python "$(dirname "$0")/nav_check.py" -0.4 -2.3 1.5708 || status=$?
+# --kill-after: rclpy handles SIGTERM, and a check stuck waiting for Nav2 can ignore it.
+timeout --kill-after=10 "${limit}" python "$(dirname "$0")/nav_check.py" -0.4 -2.3 1.5708 || status=$?
 if [[ ${status} -eq 0 ]]; then
   echo "nav-check: PASS"
-elif [[ ${status} -eq 124 ]]; then
+elif [[ ${status} -eq 124 || ${status} -eq 137 ]]; then
   echo "nav-check: FAIL (timed out after ${limit} s; sim log in ${simlog})"
 else
   echo "nav-check: FAIL (sim log in ${simlog})"
