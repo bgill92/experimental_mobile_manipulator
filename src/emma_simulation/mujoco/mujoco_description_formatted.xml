@@ -371,6 +371,7 @@
       <site name="base_footprint" pos="0 0 0" quat="1.0 0 0 0" />
       <site name="base_link" pos="0 0 0" quat="1.0 0 0 0" />
       <site name="base_inertia" pos="0 0 0" quat="1.0 0 0 0" />
+      <site name="laser_frame" pos="0.065 0 0.08" quat="0 0 0 1.0" />
       <site name="g_base" pos="0.0981 -0.0044 0.1322" quat="1.0 0 0 0" />
       <site name="joint1" pos="0.0981 -0.0044 0.1322" quat="1.0 0 0 0" />
     </body>

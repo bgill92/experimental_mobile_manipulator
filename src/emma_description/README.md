@@ -2,7 +2,7 @@
 
 URDF description of **emma**: an Elephant Robotics myAGV (2023, Raspberry Pi) base with a
 myCobot 280 M5 arm and the parallel gripper (light) mounted on top, plus a wrist RGB-D camera
-standing in for an Orbbec Gemini 305.
+standing in for an Orbbec Gemini 305 and the base's 2D lidar frame.
 
 ## Contents
 
@@ -57,8 +57,8 @@ TF tree: `base_footprint → base_link → g_base → joint1 → … → joint6_
 (which end at 48.5 mm); `emma_manipulation` plans for it. `wrist_camera_link` follows REP 103
 (x forward) and `wrist_camera_color_optical_frame` is the usual optical frame (z forward,
 x right, y down in the image); both sit at the camera's front face. A mass-only
-`base_inertia` link and the four `{front,rear}_{left,right}_wheel` links also hang off
-`base_footprint`.
+`base_inertia` link, the four `{front,rear}_{left,right}_wheel` links and the lidar's
+`laser_frame` also hang off `base_footprint`.
 
 | Joint | Type | Range |
 |---|---|---|
@@ -74,6 +74,7 @@ x right, y down in the image); both sit at the camera's front face. A mass-only
 | `gripper_base_to_wrist_camera` | fixed, `xyz="0 0.037 0" rpy="0 -1.309 -1.5708"` | — |
 | `wrist_camera_link_to_color_optical_frame` | fixed, `rpy="-1.5708 0 -1.5708"` | — |
 | `{front,rear}_{left,right}_wheel_joint` | continuous, axis +y | — |
+| `base_footprint_to_laser_frame` | fixed, `xyz="0.065 0 0.08" rpy="0 0 π"` | — |
 
 The arm joint names are upstream's and read backwards: `joint2_to_joint1` rotates link
 `joint2` relative to `joint1`.
@@ -100,7 +101,8 @@ flange mount from `mycobot_280_jn_parallel_gripper.urdf`, 34 mm along the flange
 
 **Base** (`myagv_ros2` `galactic-JN`, `afb054b`, `myAGV.urdf`): used unchanged, since the
 upstream package is not edited. `emma.urdf.xacro` adds what it lacks: the mass through the
-`base_inertia` link, and the four wheel links and joints, which upstream does not have.
+`base_inertia` link, the four wheel links and joints, which upstream does not have, and
+`laser_frame`, which upstream publishes from its lidar launch file instead.
 
 ## Assumptions and caveats
 
@@ -134,6 +136,9 @@ upstream package is not edited. `emma.urdf.xacro` adds what it lacks: the mass t
   `continuous` joint about y, 0.1 kg, with no visual (the base mesh draws the wheels, so they
   don't visibly spin) and no collision (`emma_simulation` adds mecanum rollers). Re-measure on
   the real robot if odometry matters.
+- **Lidar pose**: `laser_frame` copies the static transform in upstream's
+  `ydlidar_ros2_driver/launch/ydlidar_launch.py` (8 cm up, 6.5 cm forward, facing backwards).
+  Not measured on this robot. It is a bare frame with no visual; the base mesh draws the lidar.
 - **Mesh units differ**: arm meshes are metres, gripper meshes millimetres, base meshes inches.
   RViz reads the COLLADA `<unit>` tag so they all display correctly. Tools that ignore it, such
   as the MuJoCo converter, need rescaling (`emma_simulation` handles this).

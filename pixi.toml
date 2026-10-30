@@ -28,6 +28,12 @@ pick-check = { cmd = "bash src/emma_behaviors/scripts/pick_check.sh", depends-on
 molmospaces-scene = "python src/emma_simulation/scripts/molmospaces_scene.py"
 # The sim in the default MolmoSpaces living room (FloorPlan201). Extra args pass through like `sim`.
 sim-living-room = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_simulation sim.launch.py mujoco_model:=$PIXI_PROJECT_ROOT/src/emma_simulation/mujoco/molmospaces/scenes/ithor/FloorPlan201_emma.xml \"$@\"' --", depends-on = ["molmospaces-scene", "build"] }
+# slam_toolbox mapping in the living room; drive by hand and save the map (see emma_navigation's README).
+nav-map = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_navigation slam.launch.py \"$@\"' --", depends-on = ["molmospaces-scene", "build"] }
+# Nav2 in the living room on the saved map (MuJoCo viewer + RViz). Args pass through.
+nav-demo = { cmd = "bash -c 'source install/setup.bash && ros2 launch emma_navigation navigation.launch.py \"$@\"' --", depends-on = ["molmospaces-scene", "build"] }
+# Headless navigation; exits 0 only if emma reaches the goal within the time limit.
+nav-check = { cmd = "bash src/emma_navigation/scripts/nav_check.sh", depends-on = ["molmospaces-scene", "build"] }
 
 [dependencies]
 # ROS dependencies of the packages in src/ come from their package.xml files through [dev]; list
@@ -57,6 +63,7 @@ ros-lyrical-mycobot-description = { path = "external_packages/mycobot_descriptio
 ros-lyrical-emma-behaviors = { path = "src/emma_behaviors/package.xml" }
 ros-lyrical-emma-description = { path = "src/emma_description/package.xml" }
 ros-lyrical-emma-manipulation = { path = "src/emma_manipulation/package.xml" }
+ros-lyrical-emma-navigation = { path = "src/emma_navigation/package.xml" }
 ros-lyrical-emma-perception = { path = "src/emma_perception/package.xml" }
 ros-lyrical-emma-simulation = { path = "src/emma_simulation/package.xml" }
 

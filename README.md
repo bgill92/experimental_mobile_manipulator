@@ -21,7 +21,8 @@ pixi run build
 - [`emma_description`](src/emma_description/README.md): URDF of the robot (myAGV, myCobot 280 M5
   and parallel gripper), RViz display launch, and the changes made to the upstream models.
 - [`emma_simulation`](src/emma_simulation/README.md): MuJoCo simulation through
-  mujoco_ros2_control, with arm, gripper and mecanum base controllers.
+  mujoco_ros2_control, with arm, gripper and mecanum base controllers, the wrist camera and a 2D
+  lidar on the base.
 - [`emma_perception`](src/emma_perception/README.md): finds the pick-and-place block in the wrist
   camera's colour and depth images and publishes its pose on `/block_pose`.
 - [`emma_manipulation`](src/emma_manipulation/README.md): C++ arm planning library on roboplan
@@ -31,6 +32,8 @@ pixi run build
   [beet](https://github.com/EzraBrooks/beet) behaviour tree (C++20), with the tree and scene
   logged to [Rerun](https://rerun.io). Problems found in beet are collected in
   [`docs/beet-feedback.md`](docs/beet-feedback.md).
+- [`emma_navigation`](src/emma_navigation/README.md): Nav2 for the mecanum base on a slam_toolbox
+  map of the living room, with AMCL and the MPPI controller.
 
 ## View the robot
 
@@ -68,6 +71,14 @@ pixi run rerun log/pick_check.rrd  # replay that recording
 
 Launch arguments, example action goals, assumptions and caveats are in each package's README.
 
+## Navigate
+
+```bash
+pixi run nav-demo    # living room + Nav2 + RViz; send goals with the "Nav2 Goal" tool
+pixi run nav-check   # headless pass/fail: drive past the sofa (180 s limit)
+pixi run nav-map     # rebuild the map with slam_toolbox while driving by hand
+```
+
 ## Test
 
 ```bash
@@ -78,4 +89,5 @@ pixi run test   # gtest (emma_manipulation, emma_behaviors), pytest and mypy (em
 
 MIT, see [LICENSE](LICENSE). The Elephant Robotics description packages, beet
 and the gripper meshes in `src/emma_description/meshes/parallel_gripper/` keep their own licenses.
-MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0.
+MolmoSpaces scenes are downloaded on demand, not included, and are CC BY 4.0; the map in
+`src/emma_navigation/maps/` is derived from one.
